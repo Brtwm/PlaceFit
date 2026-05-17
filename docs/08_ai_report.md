@@ -4,6 +4,8 @@
 
 LLM **объясняет результаты расчётов** человеческим языком. LLM **не является источником фактов**. Все числа, конкуренты, score, финансы — из JSON.
 
+MVP использует OpenAI-compatible provider abstraction. Конкретный runtime-provider задаётся через `.env`; LLM по умолчанию выключен, а fallback report должен работать без LLM API key.
+
 ## JSON input contract
 
 LLM получает structured JSON (результат полного анализа):
@@ -120,15 +122,28 @@ USER:
 
 ## Параметры генерации
 
+### Runtime configuration
+
+```text
+LLM_ENABLED=false
+LLM_PROVIDER=openai_compatible
+LLM_BASE_URL=
+LLM_API_KEY=
+LLM_MODEL=
+```
+
+Если пользователь хочет использовать NeuralDeep Hub или другой OpenAI-compatible endpoint, он заполняет `LLM_BASE_URL`, `LLM_API_KEY` и `LLM_MODEL` по актуальной документации выбранного provider-а. NeuralDeep Hub не является обязательной зависимостью MVP.
+
 | Параметр | Значение |
 |----------|----------|
-| model | gpt-4o-mini (MVP) |
+| provider | `openai_compatible` |
+| model | задаётся через `LLM_MODEL` |
 | temperature | 0.3 |
 | max_tokens | 2000 |
 
 ## Fallback без LLM
 
-Если LLM API недоступен:
+Если `LLM_ENABLED=false`, LLM API key не задан или LLM API недоступен:
 
 ```
 Автоматический отчёт (AI-модуль временно недоступен)

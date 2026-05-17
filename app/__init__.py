@@ -1,0 +1,1 @@
+"""PlaceFit application package."""

@@ -28,7 +28,7 @@ http://localhost:8000/api/v1
 - `NOT_FOUND` (404) — анализ не найден
 - `INTERNAL_ERROR` (500) — внутренняя ошибка
 
-Если LLM provider недоступен, но fallback report успешно создан, endpoint возвращает HTTP 200 с `report.status = "fallback"`.
+Если `LLM_ENABLED=false`, LLM API key не задан или LLM provider недоступен, но fallback report успешно создан, endpoint возвращает HTTP 200 с `report.status = "fallback"`.
 
 ---
 
@@ -134,8 +134,8 @@ http://localhost:8000/api/v1
   "report": {
     "status": "success",
     "text": "## Краткий вывод\n\nАдрес ...",
-    "provider": "openai",
-    "model": "gpt-4o-mini",
+    "provider": "openai_compatible",
+    "model": "runtime-configured",
     "prompt_version": "v1.0"
   },
   "checklist": [
@@ -268,7 +268,8 @@ http://localhost:8000/api/v1
 {
   "status": "success",
   "text": "...",
-  "provider": "openai",
+  "provider": "openai_compatible",
+  "model": "runtime-configured",
   "prompt_version": "v1.0"
 }
 ```

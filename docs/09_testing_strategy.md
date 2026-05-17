@@ -91,10 +91,14 @@ test_locations_not_found → 404
 
 ## Mock strategy
 
-Внешние API (2GIS, Yandex, OpenAI) мокаются через:
+Внешние API и LLM provider мокаются через:
 - `pytest fixtures` с JSON responses
 - `httpx` mock transport
-- Реальные API **не** вызываются в CI
+- Реальные API **не** вызываются в обычных tests/CI
+- 2GIS real provider допускается как optional manual integration
+- Yandex fallback в MVP должен существовать на уровне provider interface и mock fixtures; real Yandex provider не блокирует готовность MVP
+- OSM fixtures используются для POI fallback tests
+- LLM мокаются как OpenAI-compatible provider, а не как обязательный конкретный vendor
 
 Файлы fixtures:
 ```
@@ -106,11 +110,20 @@ tests/fixtures/
 ├── competitors/
 │   ├── 2gis_competitors_5.json
 │   ├── 2gis_competitors_0.json
+│   ├── osm_competitors.json
 │   └── duplicates.json
 └── llm/
-    ├── openai_success.json
-    └── openai_error.json
+    ├── openai_compatible_success.json
+    └── openai_compatible_error.json
 ```
+
+Real provider calls допускаются только в тестах с manual/external marker:
+
+```bash
+pytest -m external
+```
+
+Такие тесты не должны запускаться в обычном `pytest`, CI или pre-merge проверках.
 
 ## AI report validation
 
@@ -130,7 +143,8 @@ test_report_no_hallucinated_competitors → report не содержит имё�
 3. Оценить адекватность score — сравнить с ручной оценкой.
 4. Проверить финансовую модель — корректные суммы.
 5. Прочитать AI-отчёты — нет ли галлюцинаций.
-6. Зафиксировать результаты в таблице.
+6. Проверить карту Streamlit UI: маркер анализируемой локации, маркеры конкурентов/POI, popup с брендом, типом точки и расстоянием.
+7. Зафиксировать результаты в таблице.
 
 ## Команды
 
@@ -146,4 +160,7 @@ pytest -v --tb=short
 
 # Coverage
 pytest --cov=app --cov-report=html
+
+# Manual external provider checks only
+pytest -m external
 ```
