@@ -1,0 +1,20 @@
+{
+  "address": "Краснодар, ул. Восточно-Кругликовская, 30",
+  "business_type": "pvz",
+  "rent": 85000,
+  "area_m2": 35,
+  "floor": 1,
+  "first_floor": true,
+  "separate_entrance": true,
+  "parking": true,
+  "signage_possible": true,
+  "storage_area": true,
+  "repair_condition": "normal",
+  "new_residential_area": true,
+  "high_density_area": true,
+  "bus_stop_nearby": true,
+  "good_visibility": true,
+  "expected_gross_income_by_user": 360000,
+  "investment": 600000,
+  "desired_profit": 80000
+}

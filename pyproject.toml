@@ -11,6 +11,7 @@ requires-python = ">=3.11"
 license = { file = "LICENSE" }
 dependencies = [
     "fastapi>=0.116",
+    "pydantic>=2",
     "pydantic-settings>=2.10",
     "uvicorn[standard]>=0.35",
 ]

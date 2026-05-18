@@ -1,0 +1,7 @@
+{
+  "error": {
+    "code": "GEOCODING_FAILED",
+    "message": "Не удалось геокодировать адрес",
+    "details": "2GIS API timeout after 10s"
+  }
+}
