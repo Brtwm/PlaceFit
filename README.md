@@ -2,7 +2,7 @@
 
 PlaceFit — система поддержки решений для оценки коммерческих локаций под пункты выдачи заказов. MVP фокусируется на одном сценарии: анализ конкретного адреса в Краснодаре под ПВЗ.
 
-> Статус проекта: documentation-first / MVP planning stage. Требования, архитектура, модель данных, API-контракт и план реализации подготовлены; исполняемый backend/frontend ещё не создан.
+> Статус проекта: MVP implementation is in staged progress. Backend skeleton, schemas, deterministic core, and database layer are implemented up to the current phase; UI, providers, and report orchestration are still planned.
 
 ## Проблема
 

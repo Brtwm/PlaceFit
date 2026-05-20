@@ -10,9 +10,13 @@ readme = "README.md"
 requires-python = ">=3.11"
 license = { file = "LICENSE" }
 dependencies = [
+    "alembic>=1.17",
     "fastapi>=0.116",
+    "geoalchemy2>=0.18",
     "pydantic>=2",
     "pydantic-settings>=2.10",
+    "psycopg[binary]>=3.2",
+    "sqlalchemy>=2.0",
     "uvicorn[standard]>=0.35",
 ]
 
@@ -23,6 +27,9 @@ dev = [
     "pytest>=8.3",
     "ruff>=0.8",
 ]
+
+[tool.setuptools.packages.find]
+include = ["app*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

@@ -18,6 +18,12 @@ class Settings(BaseSettings):
     llm_api_key: str = ""
     llm_model: str = ""
 
+    database_url: str = (
+        "postgresql+psycopg://placefit:placefit@localhost:5432/placefit"
+    )
+    test_database_url: str = ""
+    allow_db_reset_for_tests: bool = False
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
