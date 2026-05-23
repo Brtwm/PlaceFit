@@ -1,0 +1,47 @@
+{
+  "provider": "mixed",
+  "pois": [
+    {
+      "external_id": "dgis-ozon-vk-31",
+      "name": "OZON ПВЗ",
+      "brand": "OZON",
+      "category": "pvz",
+      "business_type": "pvz",
+      "lat": 45.0359,
+      "lon": 39.0281,
+      "address": "г Краснодар, ул Восточно-Кругликовская, д 31",
+      "rating": 4.6,
+      "reviews_count": 41
+    },
+    {
+      "external_id": "dgis-ozon-vk-31",
+      "name": "OZON ПВЗ",
+      "brand": "OZON",
+      "category": "pvz",
+      "business_type": "pvz",
+      "lat": 45.0359,
+      "lon": 39.0281,
+      "address": "г Краснодар, ул Восточно-Кругликовская, д 31"
+    },
+    {
+      "external_id": "yandex-ozon-vk-31",
+      "name": "Озон, пункт выдачи",
+      "brand": "Озон",
+      "category": "pvz",
+      "business_type": "pvz",
+      "lat": 45.03591,
+      "lon": 39.02812,
+      "address": "г Краснодар, Восточно-Кругликовская улица, 31"
+    },
+    {
+      "external_id": "osm-wb-vk-31",
+      "name": "Wildberries",
+      "brand": "Wildberries",
+      "category": "pvz",
+      "business_type": "pvz",
+      "lat": 45.03593,
+      "lon": 39.02811,
+      "address": "г Краснодар, ул Восточно-Кругликовская, д 31"
+    }
+  ]
+}

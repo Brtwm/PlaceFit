@@ -1,0 +1,34 @@
+{
+  "provider": "yandex",
+  "query": "Краснодар, Восточно-Кругликовская 30",
+  "status": "ambiguous",
+  "message": "Найдено несколько вариантов адреса.",
+  "results": [
+    {
+      "external_id": "ya-krasnodar-vk-30",
+      "address": "Краснодар, ул. Восточно-Кругликовская, 30",
+      "normalized_address": "г Краснодар, ул Восточно-Кругликовская, д 30",
+      "city": "Краснодар",
+      "lat": 45.035,
+      "lon": 39.028,
+      "confidence": 0.82,
+      "metadata": {
+        "fixture_kind": "yandex_like",
+        "synthetic": true
+      }
+    },
+    {
+      "external_id": "ya-krasnodar-vk-30-1",
+      "address": "Краснодар, ул. Восточно-Кругликовская, 30/1",
+      "normalized_address": "г Краснодар, ул Восточно-Кругликовская, д 30/1",
+      "city": "Краснодар",
+      "lat": 45.036,
+      "lon": 39.029,
+      "confidence": 0.78,
+      "metadata": {
+        "fixture_kind": "yandex_like",
+        "synthetic": true
+      }
+    }
+  ]
+}

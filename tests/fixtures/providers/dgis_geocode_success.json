@@ -1,0 +1,20 @@
+{
+  "provider": "2gis",
+  "query": "Краснодар, ул. Красная, 1",
+  "status": "resolved",
+  "results": [
+    {
+      "external_id": "dgis-krasnodar-krasnaya-1",
+      "address": "Краснодар, ул. Красная, 1",
+      "normalized_address": "г Краснодар, ул Красная, д 1",
+      "city": "Краснодар",
+      "lat": 45.025,
+      "lon": 38.971,
+      "confidence": 0.95,
+      "metadata": {
+        "fixture_kind": "2gis_like",
+        "synthetic": true
+      }
+    }
+  ]
+}

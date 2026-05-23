@@ -1,0 +1,53 @@
+{
+  "provider": "osm",
+  "pois": [
+    {
+      "external_id": "osm-ozon-vk-31",
+      "name": "Ozon пункт выдачи",
+      "brand": "Ozon",
+      "category": "pvz",
+      "business_type": "pvz",
+      "lat": 45.0359,
+      "lon": 39.0281,
+      "address": "г Краснодар, ул Восточно-Кругликовская, д 31",
+      "rating": 4.6,
+      "reviews_count": 41,
+      "metadata": {
+        "fixture_kind": "osm_like",
+        "synthetic": true
+      }
+    },
+    {
+      "external_id": "osm-wb-vk-28",
+      "name": "Wildberries",
+      "brand": "Wildberries",
+      "category": "pvz",
+      "business_type": "pvz",
+      "lat": 45.0382,
+      "lon": 39.029,
+      "address": "г Краснодар, ул Восточно-Кругликовская, д 28",
+      "rating": 4.4,
+      "reviews_count": 27,
+      "metadata": {
+        "fixture_kind": "osm_like",
+        "synthetic": true
+      }
+    },
+    {
+      "external_id": "osm-ym-vk-40",
+      "name": "Яндекс Маркет",
+      "brand": "Яндекс Маркет",
+      "category": "pvz",
+      "business_type": "pvz",
+      "lat": 45.04,
+      "lon": 39.03,
+      "address": "г Краснодар, ул Восточно-Кругликовская, д 40",
+      "rating": 4.3,
+      "reviews_count": 18,
+      "metadata": {
+        "fixture_kind": "osm_like",
+        "synthetic": true
+      }
+    }
+  ]
+}
