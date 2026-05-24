@@ -6,7 +6,8 @@ import sqlalchemy as sa
 from alembic import command
 from alembic.config import Config
 from app.api.v1.deps import get_db_session
-from app.config.settings import get_settings
+from app.api.v1.deps import get_settings as get_api_settings
+from app.config.settings import Settings, get_settings
 from app.main import create_app
 from fastapi.testclient import TestClient
 from sqlalchemy import Engine, text
@@ -43,7 +44,16 @@ def client(db_session: Session) -> Generator[TestClient, None, None]:
     def override_db_session() -> Generator[Session, None, None]:
         yield db_session
 
+    def override_settings() -> Settings:
+        return Settings(
+            _env_file=None,
+            geocoder_provider="fake",
+            poi_provider="fake",
+            llm_enabled=False,
+        )
+
     app.dependency_overrides[get_db_session] = override_db_session
+    app.dependency_overrides[get_api_settings] = override_settings
     try:
         yield TestClient(app)
     finally:

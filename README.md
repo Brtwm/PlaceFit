@@ -2,7 +2,7 @@
 
 PlaceFit — система поддержки решений для оценки коммерческих локаций под пункты выдачи заказов. MVP фокусируется на одном сценарии: анализ конкретного адреса в Краснодаре под ПВЗ.
 
-> Статус проекта: MVP implementation is in staged progress. Backend skeleton, schemas, deterministic core, and database layer are implemented up to the current phase; UI, providers, and report orchestration are still planned.
+> Статус проекта: MVP implementation is in staged progress. Backend skeleton, schemas, deterministic core, database layer, API orchestration, fallback report, and optional provider clients are implemented up to the current phase; UI and Docker packaging are still planned.
 
 ## Проблема
 
@@ -82,10 +82,15 @@ User → Streamlit UI → FastAPI Backend → Services → PostgreSQL/PostGIS
 git clone https://github.com/Brtwm/PlaceFit.git
 cd PlaceFit
 cp .env.example .env
-# Заполнить API ключи в .env
+# API keys are optional. Defaults use fake geodata providers and fallback report.
+# To opt into real providers, set GEOCODER_PROVIDER/POI_PROVIDER and API keys in .env.
 # docker-compose up --build
 # Открыть Streamlit UI после появления backend/frontend кода
 ```
+
+Provider settings default to the offline demo path:
+`GEOCODER_PROVIDER=fake`, `POI_PROVIDER=fake`, empty `DGIS_API_KEY`.
+Real 2GIS/OSM calls are optional and excluded from ordinary pytest/CI.
 
 ## Документация
 

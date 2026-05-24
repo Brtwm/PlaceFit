@@ -533,6 +533,7 @@ dependencies = [
     { name = "alembic" },
     { name = "fastapi" },
     { name = "geoalchemy2" },
+    { name = "httpx" },
     { name = "psycopg", extra = ["binary"] },
     { name = "pydantic" },
     { name = "pydantic-settings" },
@@ -542,7 +543,6 @@ dependencies = [
 
 [package.optional-dependencies]
 dev = [
-    { name = "httpx" },
     { name = "mypy" },
     { name = "pytest" },
     { name = "ruff" },
@@ -553,7 +553,7 @@ requires-dist = [
     { name = "alembic", specifier = ">=1.17" },
     { name = "fastapi", specifier = ">=0.116" },
     { name = "geoalchemy2", specifier = ">=0.18" },
-    { name = "httpx", marker = "extra == 'dev'", specifier = ">=0.28" },
+    { name = "httpx", specifier = ">=0.28" },
     { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.13" },
     { name = "psycopg", extras = ["binary"], specifier = ">=3.2" },
     { name = "pydantic", specifier = ">=2" },
