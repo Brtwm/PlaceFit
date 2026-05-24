@@ -31,7 +31,7 @@ from app.schemas.location import (
     LocationsListRequest,
     LocationsListResponse,
 )
-from app.schemas.report import DataSourceInfo, ReportResult
+from app.schemas.report import DataSourceInfo, MarketplaceRequirements, ReportResult
 from app.schemas.score import ScoreDetails as ScoreDetailsSchema
 from app.schemas.score import ScoreResult as ScoreResultSchema
 from app.services.competitors import CompetitorItem, CompetitorsResult
@@ -50,6 +50,12 @@ from app.services.finance import (
 )
 from app.services.geocoding import GeocodingService
 from app.services.marketplace import get_marketplace_requirements
+from app.services.report import (
+    PreparedAnalysisReportInput,
+    PreparedReportLocation,
+    ReportService,
+    ReportServiceError,
+)
 from app.services.scoring import ScoringInput, ScoringResult, calculate_score
 
 
@@ -90,10 +96,12 @@ class AnalysisService:
         db: Session,
         geocoding_service: GeocodingService,
         poi_providers: Sequence[PoiSearchProvider],
+        report_service: ReportService,
     ) -> None:
         self._db = db
         self._geocoding_service = geocoding_service
         self._poi_providers = poi_providers
+        self._report_service = report_service
 
     def analyze(self, request: AnalysisRequest) -> AnalysisResponse:
         """Run the full mocked-provider analysis pipeline and persist it."""
@@ -167,14 +175,31 @@ class AnalysisService:
             finance.net_profit,
         )
         scoring_version = self._active_scoring_version(request.business_type)
+        checklist = _build_checklist(decision.warnings)
+        marketplace_requirements = get_marketplace_requirements()
 
-        report = _build_fallback_report(
-            scoring=scoring,
-            confidence_score=confidence.confidence_score,
-            finance=finance,
-            competitors=competitors,
-            decision=decision.decision,
-        )
+        try:
+            report = self._report_service.generate_report(
+                self._build_report_input(
+                    request=request,
+                    candidate=candidate,
+                    competitors=competitors,
+                    scoring=scoring,
+                    confidence_score=confidence.confidence_score,
+                    scoring_version=scoring_version.version,
+                    decision=decision.decision,
+                    finance=finance,
+                    marketplace_requirements=marketplace_requirements,
+                    checklist=checklist,
+                    fetched_at=now,
+                ),
+            )
+        except ReportServiceError as exc:
+            raise AnalysisServiceError(
+                "LLM_FAILED",
+                "Отчёт не удалось создать",
+                details=str(exc),
+            ) from exc
 
         try:
             persisted = self._persist_analysis(
@@ -193,7 +218,7 @@ class AnalysisService:
                 parts=persisted,
                 competitors=competitors,
                 scoring_version=scoring_version.version,
-                checklist=_build_checklist(decision.warnings),
+                checklist=checklist,
             )
             self._db.commit()
         except Exception:
@@ -388,6 +413,60 @@ class AnalysisService:
             score=score,
             financial_model=financial_model,
             report=report_row,
+        )
+
+    def _build_report_input(
+        self,
+        *,
+        request: AnalysisRequest,
+        candidate: GeocodingCandidate,
+        competitors: CompetitorsResult,
+        scoring: ScoringResult,
+        confidence_score: int,
+        scoring_version: str,
+        decision: str,
+        finance: FinanceResult,
+        marketplace_requirements: MarketplaceRequirements,
+        checklist: list[str],
+        fetched_at: datetime,
+    ) -> PreparedAnalysisReportInput:
+        return PreparedAnalysisReportInput(
+            location=PreparedReportLocation(
+                address=request.address,
+                normalized_address=candidate.normalized_address,
+                city="Краснодар",
+                business_type=request.business_type,
+                lat=candidate.lat,
+                lon=candidate.lon,
+            ),
+            competitors=_to_competitors_summary(competitors),
+            score=ScoreResultSchema(
+                total_score=scoring.total_score,
+                confidence_score=confidence_score,
+                scoring_version=scoring_version,
+                decision=decision,
+                details=ScoreDetailsSchema(
+                    demand_score=scoring.details.demand_score,
+                    competition_score=scoring.details.competition_score,
+                    rent_score=scoring.details.rent_score,
+                    premises_score=scoring.details.premises_score,
+                    accessibility_score=scoring.details.accessibility_score,
+                ),
+            ),
+            finance=FinanceSchema(
+                monthly_costs=finance.monthly_costs,
+                required_gross_income=finance.required_gross_income,
+                expected_gross_income_by_user=finance.expected_gross_income_by_user,
+                net_profit=finance.net_profit,
+                payback_months=finance.payback_months,
+            ),
+            marketplace_requirements=marketplace_requirements,
+            checklist=checklist,
+            data_sources=_report_data_sources(
+                candidate=candidate,
+                competitors=competitors,
+                fetched_at=fetched_at,
+            ),
         )
 
     def _get_or_create_poi(
@@ -656,46 +735,6 @@ def _to_report_result(report: Report) -> ReportResult:
     )
 
 
-def _build_fallback_report(
-    *,
-    scoring: ScoringResult,
-    confidence_score: int,
-    finance: FinanceResult,
-    competitors: CompetitorsResult,
-    decision: str,
-) -> ReportResult:
-    text = (
-        "Автоматический fallback-отчёт без LLM.\n\n"
-        f"Итоговая оценка: {scoring.total_score}/100.\n"
-        f"Уверенность: {confidence_score}/100.\n"
-        f"Решение: {decision}.\n\n"
-        "Компоненты оценки:\n"
-        f"- Спрос: {scoring.details.demand_score}/35\n"
-        f"- Конкуренция: {scoring.details.competition_score}/25\n"
-        f"- Аренда: {scoring.details.rent_score}/20\n"
-        f"- Помещение: {scoring.details.premises_score}/10\n"
-        f"- Доступность: {scoring.details.accessibility_score}/10\n\n"
-        "Конкуренты:\n"
-        f"- 300 м: {competitors.competitors_300m}\n"
-        f"- 500 м: {competitors.competitors_500m}\n"
-        f"- 700 м: {competitors.competitors_700m}\n"
-        f"- Ближайший: {competitors.nearest_competitor_distance_m} м\n\n"
-        "Финансы:\n"
-        f"- Ежемесячные расходы: {finance.monthly_costs} ₽\n"
-        f"- Необходимый доход: {finance.required_gross_income} ₽\n"
-        f"- Чистая прибыль: {finance.net_profit} ₽\n"
-        f"- Окупаемость: {finance.payback_months} мес\n\n"
-        "Требования маркетплейсов требуют ручной проверки по официальным источникам."
-    )
-    return ReportResult(
-        status="fallback",
-        text=text,
-        provider="fallback",
-        model="none",
-        prompt_version="v1.0",
-    )
-
-
 def _build_checklist(warnings: Sequence[str]) -> list[str]:
     checklist = [
         "Проверить конкурентов вручную в картах перед подписанием аренды.",
@@ -705,6 +744,31 @@ def _build_checklist(warnings: Sequence[str]) -> list[str]:
     ]
     checklist.extend(warnings)
     return checklist
+
+
+def _report_data_sources(
+    *,
+    candidate: GeocodingCandidate,
+    competitors: CompetitorsResult,
+    fetched_at: datetime,
+) -> list[DataSourceInfo]:
+    sources = [
+        DataSourceInfo(
+            source=candidate.provider,
+            data_type="geocoding",
+            fetched_at=fetched_at,
+            confidence=candidate.confidence,
+        ),
+    ]
+    sources.extend(
+        DataSourceInfo(
+            source=source,
+            data_type="competitors",
+            fetched_at=fetched_at,
+        )
+        for source in competitors.sources
+    )
+    return sources
 
 
 def _score_details_dict(scoring: ScoringResult) -> dict[str, object]:
