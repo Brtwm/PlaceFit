@@ -18,6 +18,9 @@ dependencies = [
     "pydantic-settings>=2.10",
     "psycopg[binary]>=3.2",
     "sqlalchemy>=2.0",
+    "streamlit>=1.45",
+    "folium>=0.19",
+    "streamlit-folium>=0.25",
     "uvicorn[standard]>=0.35",
 ]
 
@@ -29,7 +32,7 @@ dev = [
 ]
 
 [tool.setuptools.packages.find]
-include = ["app*"]
+include = ["app*", "ui*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

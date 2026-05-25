@@ -2,6 +2,7 @@ import json
 
 from app.schemas.report import ReportResult
 from app.services.report import PreparedAnalysisReportInput
+
 from tests.unit.report_helpers import sample_report_input
 
 

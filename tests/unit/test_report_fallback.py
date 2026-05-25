@@ -2,6 +2,7 @@ from app.config.settings import Settings
 from app.providers.llm.base import LlmReportProvider
 from app.providers.llm.fallback import FallbackReportProvider
 from app.services.report import ReportService
+
 from tests.unit.report_helpers import sample_report_input
 
 

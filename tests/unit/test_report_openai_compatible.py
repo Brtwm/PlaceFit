@@ -4,6 +4,7 @@ from app.providers.llm.fallback import FallbackReportProvider
 from app.providers.llm.openai_compatible import OpenAICompatibleReportProvider
 from app.schemas.report import ReportResult
 from app.services.report import ReportService, ReportServiceError
+
 from tests.unit.report_helpers import sample_report_input
 
 
