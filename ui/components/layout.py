@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from html import escape
 
+import os
 import streamlit as st
 
 from ui.api_client import DEFAULT_API_BASE_URL
@@ -40,9 +41,10 @@ def render_sidebar() -> str:
     st.sidebar.page_link("pages/detail.py", label="Детали", icon="🔎")
     st.sidebar.divider()
 
+    default_base = os.getenv("PLACEFIT_API_BASE_URL") or DEFAULT_API_BASE_URL
     base_url = st.sidebar.text_input(
         "API base URL",
-        value=st.session_state.get("api_base_url", DEFAULT_API_BASE_URL),
+        value=st.session_state.get("api_base_url", default_base),
     )
     st.session_state["api_base_url"] = base_url
     st.sidebar.markdown(

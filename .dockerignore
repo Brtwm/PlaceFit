@@ -1,0 +1,60 @@
+# Environment and secrets
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.python-version
+.venv/
+venv/
+env/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+dist/
+build/
+*.egg-info/
+
+# Git and local workspace
+.git/
+.gitignore
+memory-bank/
+
+# Logs and temporary files
+*.log
+logs/
+tmp/
+temp/
+
+# Docker/local volumes and data artifacts
+.docker/
+docker-data/
+postgres-data/
+pgdata/
+*.sqlite
+*.sqlite3
+*.db
+
+# Generated media/build artifacts
+screenshots/
+*.png
+*.jpg
+*.jpeg
+*.webp
+*.gif
+
+# Future Node/frontend artifacts
+node_modules/
+.next/
+coverage/
+
+# IDE and OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
