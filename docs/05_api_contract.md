@@ -84,6 +84,8 @@ http://localhost:8000/api/v1
         "brand": "ozon",
         "category": "pvz",
         "address": "ул. Восточно-Кругликовская, 28",
+        "lat": 45.036,
+        "lon": 39.029,
         "distance_m": 180,
         "rating": 4.2,
         "reviews_count": 156,

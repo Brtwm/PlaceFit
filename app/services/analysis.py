@@ -681,6 +681,8 @@ def _to_competitors_summary(result: CompetitorsResult) -> CompetitorsSummary:
                 brand=competitor.brand,
                 category=competitor.category,
                 address=competitor.address,
+                lat=competitor.lat,
+                lon=competitor.lon,
                 distance_m=competitor.distance_m,
                 rating=competitor.rating,
                 reviews_count=competitor.reviews_count,

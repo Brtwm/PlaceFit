@@ -65,6 +65,9 @@ def test_analyze_success_returns_full_response(client: TestClient) -> None:
     } == {"needs_manual_check"}
     assert payload["report"]["status"] == "fallback"
     assert payload["report"]["provider"] == "fallback"
+    first_competitor = payload["competitors"]["list"][0]
+    assert first_competitor["lat"] is not None
+    assert first_competitor["lon"] is not None
 
 
 def test_analyze_saves_to_db(client: TestClient, db_session: Session) -> None:

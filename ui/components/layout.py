@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
+import os
 from html import escape
 
-import os
 import streamlit as st
 
 from ui.api_client import DEFAULT_API_BASE_URL
@@ -73,4 +73,3 @@ def render_page_header(title: str, subtitle: str | None = None) -> None:
         """,
         unsafe_allow_html=True,
     )
-

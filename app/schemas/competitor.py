@@ -21,6 +21,8 @@ class CompetitorInfo(AppBaseModel):
     brand: str
     category: str
     address: str
+    lat: Latitude | None = None
+    lon: Longitude | None = None
     distance_m: PositiveInt
     rating: PositiveFloat | None = None
     reviews_count: PositiveInt | None = None
