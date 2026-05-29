@@ -37,7 +37,7 @@ CREATE TABLE locations (
     geocoding_source TEXT,       -- '2gis', 'yandex', 'osm'
     geocoding_fetched_at TIMESTAMP,
     geocoding_confidence NUMERIC,
-    user_id INTEGER,             -- reserved for future auth/multi-user mode, not used in MVP
+    user_id INTEGER,             -- reserved; auth/multi-user is V3 unless a concrete earlier need appears
     created_at TIMESTAMP DEFAULT NOW(),
     updated_at TIMESTAMP DEFAULT NOW()
 );
@@ -162,7 +162,7 @@ CREATE TABLE reports (
 ### scoring_versions
 Версии правил скоринга.
 
-В MVP таблица обязательна: каждый анализ сохраняет `scoring_version_id`. Управление версиями через UI/admin, сравнение результатов между версиями и история изменений относятся к V1.5.
+В MVP таблица обязательна: каждый анализ сохраняет `scoring_version_id`. Управление версиями, сравнение результатов между версиями и история изменений относятся к V1.5 scoring governance после V1.1 validation и V1.2 compare mode.
 
 ```sql
 CREATE TABLE scoring_versions (
@@ -176,7 +176,9 @@ CREATE TABLE scoring_versions (
 ```
 
 ### marketplace_requirements
-Требования маркетплейсов (справочник).
+Требования маркетплейсов (справочник). В MVP такие требования не используются
+как автоматическое подтверждение соответствия. Продуктовый ответ остаётся
+`needs_manual_check`; source-tracked maturity относится к V1.5.
 
 ```sql
 CREATE TABLE marketplace_requirements (
@@ -194,9 +196,14 @@ CREATE TABLE marketplace_requirements (
 );
 ```
 
-## Будущие таблицы (НЕ MVP)
+## Future tables (not MVP)
 
-### trend_signals (V2)
+### trend_signals (deferred / conditional)
+
+Autonomous trendwatcher is not active roadmap scope. A table like this may be
+considered only after V1.4 manual saved-location refresh and after legal,
+stable, useful data sources are proven. It must not be introduced as part of V1.x.
+
 ```sql
 CREATE TABLE trend_signals (
     id SERIAL PRIMARY KEY,
@@ -221,4 +228,4 @@ CREATE TABLE trend_signals (
 2. **Дедупликация POI**: UNIQUE constraint по (source, external_id). Кросс-источниковая дедупликация — по расстоянию (< 50 м) + совпадению бренда.
 3. **Source freshness**: `locations.geocoding_fetched_at` и `pois.fetched_at`. Данные старше TTL перезапрашиваются.
 4. **API `data_sources`**: вычисляется из `locations.geocoding_source`, `locations.geocoding_fetched_at`, `locations.geocoding_confidence`, `pois.source`, `pois.fetched_at` и `reports.provider`.
-5. **В будущем**: не дублировать конкурентов per location. POI — глобальный справочник. Связь через `location_poi_distances`.
+5. **Post-MVP**: не дублировать конкурентов per location. POI — глобальный справочник. Связь через `location_poi_distances`.

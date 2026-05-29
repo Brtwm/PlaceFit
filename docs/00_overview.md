@@ -1,50 +1,65 @@
-# PlaceFit — Обзор продукта
+# PlaceFit — обзор продукта
 
 ## Что это
 
-**PlaceFit** — геоаналитическая система поддержки решений для оценки коммерческих локаций. Помогает предпринимателю за 1–3 минуты получить структурированную оценку адреса под открытие пункта выдачи заказов (ПВЗ).
+**PlaceFit** — геоаналитическая система поддержки решений для оценки одной
+коммерческой локации под ПВЗ. MVP / V1.0 сфокусирован на анализе конкретного
+адреса в Краснодаре.
+
+Текущий статус: **local demo ready**. Backend, PostgreSQL/PostGIS, deterministic
+services, fake/fallback providers, optional real providers, AI/fallback report,
+Streamlit UI, карта, чек-лист и история анализов уже реализованы.
+
+## Целевой пользователь
+
+Предприниматель, менеджер по развитию или аналитик, который выбирает помещение
+под ПВЗ и хочет быстро получить предварительную, воспроизводимую оценку.
 
 ## Ключевая ценность
 
 | Проблема | Решение PlaceFit |
-|----------|-------------------|
-| Данные о конкурентах разбросаны по картам | Автоматический поиск и дедупликация конкурентов в радиусе 300/500/700 м |
-| Финансовая оценка — в Excel или «в голове» | Структурированная финансовая модель с break-even и payback |
-| Нет объективной оценки локации | Rule-based scoring 0–100 с разбивкой по компонентам |
-| Неизвестно, насколько можно доверять оценке | Отдельный confidence score |
-| Нужно часами собирать информацию | Всё в одном интерфейсе за 1–3 минуты |
+|---|---|
+| Конкурентов приходится вручную искать на картах | Поиск и дедупликация POI в радиусах 300/500/700 м |
+| Финансовая оценка живёт в Excel или "в голове" | Детерминированная модель costs, break-even, payback |
+| Трудно сравнить качество локации | Rule-based score 0-100 с компонентами |
+| Неясно, насколько оценке можно доверять | Отдельный confidence score |
+| Отчёт может звучать слишком уверенно | AI/fallback report объясняет только готовый JSON |
 
-## Целевой пользователь MVP
+## MVP / V1.0 scope
 
-Предприниматель или менеджер, подбирающий помещение под ПВЗ в Краснодаре.
-
-## MVP scope
-
-- Один город: **Краснодар**.
-- Один формат: **ПВЗ**.
-- Один сценарий: **анализ конкретного адреса**.
-- Результат: **score + confidence + финансы + AI-отчёт + чек-лист**.
-
-## Стек
-
-- **Backend**: Python, FastAPI, PostgreSQL/PostGIS.
-- **Frontend**: Streamlit (MVP).
-- **AI**: OpenAI API для отчётов. LLM не принимает решений — только объясняет расчёты.
-- **Данные**: 2GIS API, Yandex Maps, OpenStreetMap.
-
-## Roadmap
-
-| Версия | Фокус |
-|--------|-------|
-| **MVP** | Анализ одного адреса под ПВЗ в Краснодаре |
-| **V1.5** | Сравнение адресов, мониторинг, Telegram-бот, экспорт |
-| **V2** | City-wide search, H3-карта, trendwatcher, новые бизнесы |
-| **V3** | ML-прогноз выручки, оптимизация сети, B2B-платформа |
+- Один город: Краснодар.
+- Один бизнес-тип: PVZ / ПВЗ (`business_type = "pvz"`).
+- Один сценарий: анализ конкретного адреса.
+- Результат: score, confidence, finance, decision, report, checklist, map,
+  history.
+- Demo path работает без внешних API keys и без LLM key.
 
 ## Принцип работы
 
-```
-Адрес + параметры → Геокодинг → Конкуренты → Скоринг → Финансы → AI-отчёт
+```text
+Address + inputs
+  -> geocoding
+  -> competitors + deduplication
+  -> deterministic scoring / finance / confidence / decision
+  -> AI report or fallback report
+  -> saved analysis + UI result
 ```
 
-AI не является источником фактов. Все расчёты выполняются детерминированным кодом. LLM получает готовый JSON и формирует человеко-читаемый отчёт.
+**AI explains, deterministic code decides.** LLM не является источником фактов,
+не считает score, confidence, finance или decision и не имеет доступа к БД,
+shell, external APIs или секретам.
+
+## Краткий roadmap
+
+- **V1.1**: stabilization, manual validation, docs hardening.
+- **V1.2**: compare mode for 2-5 addresses.
+- **V1.3**: Markdown/PDF/Excel export and report polish.
+- **V1.4**: manual refresh and delta view for saved locations.
+- **V1.5**: scoring governance and source-tracked marketplace rule maturity.
+- **V2**: city-wide location intelligence for PVZ only.
+- **V3**: ML/B2B/multi-business platform after dataset/backtesting.
+
+Полный roadmap: [docs/10_roadmap.md](10_roadmap.md).
+
+Telegram bot is not a product priority. It may be considered only as a thin
+wrapper over a mature product if a real customer explicitly requests it.

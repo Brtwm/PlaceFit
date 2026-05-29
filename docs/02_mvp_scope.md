@@ -1,74 +1,103 @@
 # MVP Scope — PlaceFit
 
-## Определение MVP
+## Definition
 
-Рабочий сервис для оценки адреса в Краснодаре под ПВЗ за 1–3 минуты.
+MVP / V1.0 is a local-demo-ready service that evaluates one Krasnodar address
+for a PVZ / ПВЗ location in 1-3 minutes.
 
-## Границы
+## Implemented MVP Scope
 
-- **Город**: Краснодар.
-- **Бизнес**: только ПВЗ.
-- **Сценарий**: один адрес за раз.
-- **UI**: Streamlit.
+### Product boundaries
 
-## Включённые фичи
+- City: Krasnodar only.
+- Business type: `pvz` only.
+- Scenario: one address per analysis.
+- UI: Streamlit.
+- Backend: FastAPI.
+- Storage: PostgreSQL/PostGIS with Alembic migrations.
+- Demo mode: fake geodata providers and fallback report, no real API keys.
 
-### Ввод
-- Адрес, аренда, площадь, этаж, первый этаж, отдельный вход
-- Парковка, вывеска, склад, ремонт
-- Новый ЖК, плотность, остановка, видимость
-- Ожидаемый доход, инвестиции, желаемая прибыль
+### Input
 
-### Обработка
-- Геокодинг + валидация города
-- Поиск конкурентов 700 м + дедупликация
-- Подсчёт по радиусам 300/500/700 м
-- Rule-based scoring 0–100
-- Confidence score 0–100
-- Финансовая модель (costs, break-even, payback)
-- Проверка требований маркетплейсов (упрощённая)
-- Решение: можно / проверить / не открывать
-- AI-отчёт из JSON + fallback
+- Address, rent, area, floor, first floor, separate entrance.
+- Parking, signage, storage area, repair condition.
+- New residential area, high density area, bus stop nearby, visibility.
+- User-provided income hypothesis, investment, desired profit.
 
-### Вывод
-- Score + confidence + решение
-- Карта + таблица конкурентов
-- Финансы, AI-отчёт, чек-лист (20 пунктов)
-- История анализов
+### Processing
 
-### Инфраструктура
-- БД (PostgreSQL/PostGIS), кэш, Docker
+- Geocoding and Krasnodar validation.
+- Competitor search within 700 m.
+- Deduplication and radius buckets for 300/500/700 m.
+- Rule-based score 0-100.
+- Confidence score 0-100.
+- Deterministic finance model.
+- Deterministic decision.
+- Simplified marketplace requirements response with `needs_manual_check=true`.
+- AI report from prepared JSON or fallback report.
+- Scoring version link for each analysis.
 
-## Исключено из MVP
+### Output
 
-| Фича | Версия | Причина |
-|------|--------|---------|
-| Сравнение адресов | V1.5 | Доп. UI |
-| Telegram-бот | V1.5 | Не ядро |
-| PDF/Excel | V1.5 | Nice-to-have |
-| City-wide / H3 | V2 | Сложная инфра |
-| Trendwatcher | V2 | Нет данных |
-| ML-прогноз | V3 | Нет выборки |
-| Авторизация / multi-user | V3 | Не нужна для проверки core value MVP |
-| Аптеки/кофейни | V3 | Другие правила |
-| Парсинг Авито/Циан | ❌ | Юридические риски |
+- Score, confidence, decision.
+- Finance result.
+- AI report or fallback report.
+- Checklist.
+- Competitor table and map.
+- Saved analysis history and detail pages.
 
-## Acceptance criteria
+## MVP Non-Goals
 
-1. Адрес → результат за 1–3 минуты
-2. Конкуренты найдены и на карте
-3. Score 0–100 с 5 компонентами
-4. Confidence 0–100
-5. Финансовая модель корректна
-6. AI-отчёт или fallback
-7. Анализ сохранён, история доступна
-8. Чек-лист отображён
-9. Unit tests для scoring/finance
-10. Docker Compose работает
+- No ML revenue/order/payback forecast.
+- No city-wide search, H3 grid, or heatmap.
+- No autonomous trendwatcher.
+- No Telegram bot or mobile app.
+- No browser-agent.
+- No Avito/Cian scraping.
+- No auth/multi-user mode.
+- No new business types.
+- No official marketplace compliance decision.
+- No guarantee of profit.
 
-## Non-goals
+## Post-MVP Placement
 
-- НЕ прогнозирует выручку автоматически
-- НЕ гарантирует прибыль
-- НЕ заменяет ручную проверку
-- НЕ ищет лучшие зоны в городе
+| Capability | Version | Notes |
+|---|---|---|
+| Manual validation dataset and demo cases | V1.1 | First post-MVP step |
+| Compare mode for 2-5 addresses | V1.2 | Before monitoring/admin work |
+| Markdown/PDF/Excel export | V1.3 | Reporting polish only |
+| Saved location refresh and deltas | V1.4 | Manual refresh, no crawler |
+| Scoring rule comparison and governance | V1.5 | Preserve historical versions |
+| Marketplace rules with source tracking | V1.5 | Manual-check/versioned rules |
+| City-wide PVZ intelligence | V2 | PVZ only, after validation |
+| ML and multi-business platform | V3 | Requires dataset and backtesting |
+
+## Deferred / Parking Lot
+
+- Telegram bot.
+- Mobile app.
+- Browser-agent.
+- Avito/Cian parsing without legal basis.
+- Fully autonomous trendwatcher.
+- Premature ML without dataset.
+- Premature multi-business expansion.
+- Premature React rewrite before Streamlit limitations are proven.
+
+Telegram bot is not a product priority. It may be considered only as a thin
+wrapper over a mature product if a real customer explicitly requests it.
+
+## Acceptance Criteria
+
+MVP / V1.0 is accepted when:
+
+1. User can analyze one Krasnodar PVZ address.
+2. Backend returns score, confidence, finance, decision, report, checklist, and
+   data sources.
+3. Competitors are found, deduplicated, bucketed, listed, and displayed on the
+   map when coordinates are available.
+4. Analysis is saved and available in history/detail views.
+5. Fallback report works without LLM key.
+6. Demo path works without real external provider keys.
+7. Docker Compose starts backend, PostGIS, and Streamlit.
+8. Ordinary tests do not call real external APIs.
+9. Documentation states limitations and does not imply profit guarantees.

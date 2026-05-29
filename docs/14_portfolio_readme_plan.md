@@ -1,85 +1,60 @@
-# Portfolio README Plan — PlaceFit
+# Portfolio README Plan — Historical Note
 
-## Структура README
+## Status
 
-````markdown
-# PlaceFit — Location Intelligence для ПВЗ
+This document is a historical portfolio/README planning note. The active GitHub
+README is [README.md](../README.md), and the active product roadmap is
+[docs/10_roadmap.md](10_roadmap.md).
 
-[краткое описание, 2-3 предложения]
+Do not use this file as a current implementation plan.
 
-## 🎯 Проблема
-[описание боли пользователя]
+## Current README Direction
 
-## 💡 Решение
-[что делает PlaceFit, ключевая ценность]
+README should stay concise and honest:
 
-## 🖼️ Screenshots
-[3-5 скриншотов: ввод, результат, карта, отчёт, история]
+- PlaceFit is MVP / V1.0 local demo ready.
+- Demo path works without real API keys and without LLM key.
+- Deterministic backend code calculates score, confidence, finance, and
+  decision.
+- LLM is optional and only explains prepared JSON.
+- Fallback report is valid behavior.
+- PlaceFit does not guarantee profit.
+- Marketplace requirements require manual verification.
+- Detailed roadmap lives in `docs/10_roadmap.md`.
 
-## ⚡ Ключевые возможности
-- Rule-based scoring 0–100
-- Confidence score
-- Автоматический поиск конкурентов
-- Финансовая модель
-- AI-отчёт с guardrails
-- Чек-лист ручной проверки
+## Roadmap Summary For Portfolio
 
-## 🏗️ Архитектура
-[диаграмма: User → Streamlit → FastAPI → Services → DB → APIs]
+Use this concise roadmap wording:
 
-## 🛠️ Стек
-Python, FastAPI, PostgreSQL/PostGIS, Streamlit, OpenAI API, Docker
-
-## 🚀 Quick Start
-```bash
-git clone ...
-cp .env.example .env
-docker-compose up
+```text
+MVP / V1.0: local demo ready
+V1.1: stabilization and manual validation
+V1.2: compare mode
+V1.3: export/reporting polish
+V1.4: saved-location refresh and deltas
+V1.5: scoring governance and marketplace rule maturity
+V2: city-wide PVZ-only intelligence
+V3: ML/B2B/multi-business platform after dataset/backtesting
 ```
 
-## 📊 Пример результата
-[JSON или скриншот одного анализа]
+Telegram bot is not a product priority. It may be considered only as a thin
+wrapper over a mature product if a real customer explicitly requests it.
 
-## 📋 API
-[2-3 основных endpoint с кратким описанием]
+## Avoid In README
 
-## 🗺️ Roadmap
-MVP → V1.5 (сравнение, Telegram) → V2 (H3, trendwatcher) → V3 (ML)
+- Do not claim the product automatically finds the best location.
+- Do not say AI makes business decisions.
+- Do not imply guaranteed profit.
+- Do not imply official marketplace compliance.
+- Do not list deferred ideas as active roadmap.
+- Do not make README a huge roadmap document.
 
-## ⚠️ Ограничения
-- MVP: только ПВЗ, только Краснодар
-- Не прогнозирует выручку автоматически
-- Не заменяет ручную проверку
-- AI не является источником фактов
+## Useful Portfolio Signals
 
-## 📖 Документация
-[ссылки на docs/]
-
-## 📝 Лицензия
-````
-
-## Скриншоты/диаграммы для подготовки
-
-1. **Input form** — Streamlit форма ввода адреса.
-2. **Result dashboard** — Score card + decision.
-3. **Competitor map** — Карта с маркерами конкурентов.
-4. **AI report** — Пример текста отчёта.
-5. **History page** — Таблица анализов.
-6. **Architecture diagram** — Mermaid или draw.io.
-
-## Чего НЕ стоит делать в README
-
-- ❌ Overclaim: «автоматически найдёт лучшую локацию».
-- ❌ «AI принимает бизнес-решения».
-- ❌ «Гарантированная прибыль».
-- ❌ Скрывать ограничения.
-- ❌ Показывать только успешные кейсы.
-
-## Portfolio value signals
-
-- Продуктовое мышление (не просто код, а business problem → solution).
-- Архитектурная зрелость (provider abstraction, scoring versioning).
-- Честность (confidence score, limitations, чек-лист).
-- Тестируемость (unit tests, mock strategy).
-- DevOps (Docker, docker-compose, .env).
-- AI инженерия (structured input, hallucination prevention, fallback).
+- Product focus: narrow MVP before expansion.
+- Engineering discipline: provider abstraction, deterministic core, scoring
+  versioning.
+- AI safety: structured input, hallucination prevention, fallback report.
+- Testing: no real external APIs in ordinary tests.
+- DevOps: Docker Compose and `.env.example` without secrets.
+- Honesty: limitations, manual validation, marketplace caveats.

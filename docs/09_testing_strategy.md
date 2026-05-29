@@ -1,166 +1,184 @@
-# Стратегия тестирования — PlaceFit MVP
+# Testing Strategy — PlaceFit
 
-## Unit tests
+## Principles
 
-### scoring.py
-```
-test_demand_score_all_true → 35
-test_demand_score_all_false → 5
-test_demand_score_partial → 20
-test_competition_score_no_competitors → 25
-test_competition_score_many_close → low
-test_rent_score_cheap → 20
-test_rent_score_expensive → 2
-test_premises_score_ideal → 10
-test_premises_score_bad_floor → score без first_floor бонуса
-test_accessibility_score_full → 10
-test_total_score_range_0_100 → parameterized
-test_total_score_deterministic → одинаковый ввод = одинаковый score
-```
+- Deterministic code is tested directly.
+- Ordinary tests must not call real external APIs.
+- LLM is optional; fallback report is first-class successful behavior.
+- Post-MVP validation is required before scope expansion.
+- Manual validation findings should update docs and known limitations before
+  new roadmap features are started.
 
-### finance.py
-```
-test_monthly_costs_default → 295000
-test_monthly_costs_custom → правильная сумма
-test_required_gross_income → costs + desired_profit
-test_net_profit_positive → income - costs
-test_net_profit_negative → отрицательное число
-test_net_profit_no_income → null
-test_payback_positive → investment / net_profit
-test_payback_negative_profit → null
-test_payback_zero_profit → null
+## Automated Tests
+
+### Unit tests
+
+Core modules:
+
+```text
+scoring.py
+finance.py
+decision.py
+confidence.py
+deduplication.py
+geocoding parser
+provider factories
+report fallback / OpenAI-compatible wrapper
+schemas
+settings
 ```
 
-### decision.py
-```
-test_decision_high_score_positive_profit → «можно рассматривать»
-test_decision_mid_score → «проверить дополнительно»
-test_decision_low_score → «скорее не открывать»
-test_decision_high_score_negative_profit → «проверить дополнительно»
-test_decision_high_rent_warning → предупреждение
+Expected coverage themes:
+
+- Score stays in 0-100.
+- Same input produces the same output.
+- Finance formulas are stable.
+- Decision thresholds are deterministic.
+- Confidence reflects source count, freshness, manual inputs, competitors, and
+  finance assumptions.
+- Deduplication removes same external IDs and close same-brand duplicates.
+- `business_type` is limited to `pvz`.
+- Marketplace statuses reject automatic `passed` / `failed` in MVP.
+
+### Integration tests
+
+Implemented MVP endpoints:
+
+```text
+GET  /health
+POST /api/v1/analyze
+GET  /api/v1/locations
+GET  /api/v1/locations/{id}
+POST /api/v1/geocode
+POST /api/v1/competitors/search
 ```
 
-### confidence.py
-```
-test_confidence_full_data → high score
-test_confidence_one_source → снижение
-test_confidence_old_data → снижение
-test_confidence_no_income → снижение
-test_confidence_no_competitors_found → снижение
-```
+Important scenarios:
 
-### deduplication
-```
-test_dedup_same_external_id → 1 result
-test_dedup_close_distance_same_brand → 1 result
-test_dedup_different_brands_close → 2 results
-test_dedup_same_brand_far → 2 results
-```
+- Successful analysis returns full response.
+- Analysis is saved to DB with `scoring_version_id`.
+- History and detail endpoints return saved analysis data.
+- Ambiguous address returns suggestions.
+- Non-Krasnodar address is rejected.
+- LLM disabled or unavailable returns HTTP 200 with `report.status = "fallback"`.
+- Top-level `LLM_FAILED` is allowed only if no report can be created.
+- Ordinary integration tests do not make network calls.
 
-### geocoding parser
-```
-test_parse_2gis_response → корректные координаты
-test_parse_yandex_response → корректные координаты
-test_city_validation_krasnodar → pass
-test_city_validation_moscow → fail
-test_multiple_results → список вариантов
-```
+### Mock and external provider strategy
 
-## Integration tests
+External APIs and LLM providers are mocked or replaced by deterministic fakes in
+ordinary tests:
 
-### /api/v1/analyze (с моками внешних API)
-```
-test_analyze_success → 200, полный response
-test_analyze_geocoding_fail → 502, error
-test_analyze_city_not_supported → 400, error
-test_analyze_ambiguous_address → 400, suggestions
-test_analyze_llm_fail_fallback → 200, report.status = "fallback"
-test_analyze_llm_and_fallback_fail → 502, error.code = "LLM_FAILED"
-test_analyze_saves_to_db → location + score + finance + report в БД
-test_analyze_validation_error → 422, missing required fields
-```
+- fake geocoder / fake POI provider;
+- fixture-shaped 2GIS/Yandex/OSM responses;
+- OpenAI-compatible mock responses;
+- fallback report provider.
 
-### /api/v1/locations
-```
-test_locations_list → 200, items
-test_locations_filter_by_score → filtered results
-test_locations_filter_by_decision → filtered results
-test_locations_detail → 200, full analysis
-test_locations_not_found → 404
-```
-
-## Mock strategy
-
-Внешние API и LLM provider мокаются через:
-- `pytest fixtures` с JSON responses
-- `httpx` mock transport
-- Реальные API **не** вызываются в обычных tests/CI
-- 2GIS real provider допускается как optional manual integration
-- Yandex fallback в MVP должен существовать на уровне provider interface и mock fixtures; real Yandex provider не блокирует готовность MVP
-- OSM fixtures используются для POI fallback tests
-- LLM мокаются как OpenAI-compatible provider, а не как обязательный конкретный vendor
-
-Файлы fixtures:
-```
-tests/fixtures/
-├── geocoding/
-│   ├── 2gis_success.json
-│   ├── 2gis_ambiguous.json
-│   └── yandex_success.json
-├── competitors/
-│   ├── 2gis_competitors_5.json
-│   ├── 2gis_competitors_0.json
-│   ├── osm_competitors.json
-│   └── duplicates.json
-└── llm/
-    ├── openai_compatible_success.json
-    └── openai_compatible_error.json
-```
-
-Real provider calls допускаются только в тестах с manual/external marker:
+Real provider checks are manual/external only:
 
 ```bash
 pytest -m external
 ```
 
-Такие тесты не должны запускаться в обычном `pytest`, CI или pre-merge проверках.
+They require explicit environment variables such as
+`RUN_EXTERNAL_PROVIDER_TESTS=true` and provider keys where applicable.
 
-## AI report validation
+## V1.1 Manual Validation Strategy
 
-```
-test_report_json_schema → input JSON validates against schema
-test_report_contains_required_sections → все 9 секций присутствуют
-test_fallback_report_format → шаблон корректен
-test_report_no_hallucinated_competitors → report не содержит имён, которых нет в input
-```
+V1.1 turns manual validation into a first-class artifact. Validate 30-50 real
+Krasnodar addresses before expanding scope.
 
-## Manual validation
+### Address selection
 
-После запуска MVP — проверка 30–50 реальных адресов Краснодара:
+Use a balanced set:
 
-1. Проверить конкурентов на карте 2ГИС вручную — совпадает ли с автоматическим поиском.
-2. Проверить дедупликацию — нет ли дублей.
-3. Оценить адекватность score — сравнить с ручной оценкой.
-4. Проверить финансовую модель — корректные суммы.
-5. Прочитать AI-отчёты — нет ли галлюцинаций.
-6. Проверить карту Streamlit UI: маркер анализируемой локации, маркеры конкурентов/POI, popup с брендом, типом точки и расстоянием.
-7. Зафиксировать результаты в таблице.
+- Dense residential area.
+- Weak location.
+- High-competition area.
+- Low-competition area.
+- Ambiguous geocoding case.
+- Edge cases near Krasnodar city boundary.
+- Good demo address.
+- Medium/ordinary address.
+- Bad address.
+- Controversial address where score and manual intuition may disagree.
 
-## Команды
+### What to check
+
+For each case, verify:
+
+- Coordinates and normalized address.
+- City validation.
+- Competitor count.
+- Deduplication.
+- Radius buckets: 300/500/700 m.
+- Nearest and average competitor distance.
+- Score components.
+- Confidence score and data source explanation.
+- Finance assumptions and user-entered income hypothesis.
+- Decision wording.
+- AI/fallback report hallucination risk.
+- Marketplace requirement wording remains `needs_manual_check`.
+- Streamlit map location marker.
+- Streamlit map competitor markers and popups when coordinates exist.
+- Checklist relevance.
+
+### How to record results
+
+Use [manual validation case template](templates/manual_validation_case.md) or an
+equivalent table with these fields:
+
+| Field | Purpose |
+|---|---|
+| address | Input address |
+| case_type | Good / medium / weak / controversial / ambiguous / boundary |
+| expected_notes | Manual expectation before running PlaceFit |
+| automated_result | Score, confidence, decision, finance summary |
+| competitor_manual_check | Map/manual notes |
+| deduplication_notes | Duplicates found or missed |
+| report_notes | Hallucination, overclaim, missing caveat |
+| ui_map_notes | Marker/popup issues |
+| issue_severity | none / low / medium / high |
+| follow_up_action | Docs, test, bugfix, or accepted limitation |
+
+### Acceptance for V1.1 validation
+
+- At least 30 validation cases are recorded.
+- At least five cases cover edge/ambiguous/boundary behavior.
+- Known limitations are listed in docs.
+- Any high-severity issue has a follow-up task.
+- README quickstart still works from fresh clone.
+- Ordinary automated tests pass.
+
+## AI Report Validation
+
+Report checks must confirm:
+
+- Required report sections exist.
+- Report uses only prepared analysis JSON.
+- Report does not invent competitors, traffic, revenue, or compliance status.
+- Report states that PlaceFit does not guarantee profit.
+- Fallback report remains deterministic and useful.
+
+## Commands
 
 ```bash
 # Unit tests
-pytest tests/unit/ -v
+uv run pytest tests/unit/ -v
 
 # Integration tests
-pytest tests/integration/ -v
+uv run pytest tests/integration/ -v
 
-# All tests
-pytest -v --tb=short
+# All ordinary tests, excluding external provider tests
+uv run pytest -v --tb=short
 
-# Coverage
-pytest --cov=app --cov-report=html
+# Lint and typing
+uv run ruff check .
+uv run mypy app
+
+# Compose config
+docker compose config
 
 # Manual external provider checks only
-pytest -m external
+uv run pytest -m external
 ```

@@ -87,7 +87,10 @@ payback_months = null (не рассчитывается при net_profit ≤ 0
 
 ## Будущее (V3)
 
-- ML-прогноз `expected_gross_income` на основе features (локация, конкуренты, плотность).
+- ML-прогноз `expected_gross_income` только после появления dataset и backtesting.
 - Сценарный анализ (optimistic / base / pessimistic).
 - Учёт сезонности.
 - ROI и NPV.
+
+До V3 финансовая модель остаётся deterministic decision-support model. Она не
+является прогнозом выручки и не гарантирует прибыль.

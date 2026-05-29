@@ -1,5 +1,11 @@
 # AI Location Agent — обновлённое ТЗ для разработчика
 
+> Status: historical / superseded reference.
+>
+> MVP / V1.0 is now considered local-demo-ready under the PlaceFit name. This
+> document remains useful as background, but active future development must use
+> `README.md`, `docs/02_mvp_scope.md`, and `docs/10_roadmap.md`.
+
 ## 0. Назначение документа
 
 Это рабочее техническое задание для разработки **AI Location Agent** — геоаналитической системы поддержки решений для оценки локаций под открытие ПВЗ и других франчайзинговых точек на российском рынке.
@@ -66,7 +72,7 @@
 3. **Все внешние данные должны иметь источник и дату обновления.**
 4. **Нельзя обещать гарантированную прибыль.** Сервис даёт предварительную оценку и чек-лист ручной проверки.
 5. **MVP должен быть узким и проверяемым.** Первый кейс: ПВЗ в Краснодаре.
-6. **Архитектура должна быть расширяемой.** В будущем нужно добавить аптеки, кофейни, сервисные точки, H3-карту, трендвотчер и ML-прогноз.
+6. **Архитектура должна быть расширяемой, но scope должен расширяться последовательно.** Активный roadmap после MVP: V1.1 validation, V1.2 compare mode, V1.3 export, V1.4 manual refresh/deltas, V1.5 scoring governance, V2 PVZ-only city-wide intelligence, V3 ML/B2B/multi-business after dataset/backtesting.
 
 ---
 
@@ -135,208 +141,78 @@
 
 ---
 
-## 5.2. V1.5 — усиление MVP и удобство принятия решений
+## 5.2. Active post-MVP roadmap
 
-### Цель V1.5
+The original V1.5/V2/V3 grouping is superseded. Use `docs/10_roadmap.md` as the
+active source of truth.
 
-Превратить MVP из калькулятора одной точки в инструмент сравнения и мониторинга адресов.
+### V1.1 — Stabilization, validation, documentation hardening
 
-### Основные добавления
+- Manual validation harness for 30-50 real Krasnodar addresses.
+- Manual competitor checks against maps.
+- Deduplication and 300/500/700 m bucket review.
+- AI/fallback report hallucination review.
+- Streamlit map review.
+- Known limitations log.
+- Fresh-clone demo reproducibility.
 
-1. **Сравнение 2–5 адресов.**
-2. **Улучшенный confidence score.**
-3. **Версионирование правил скоринга.**
-4. **Улучшенный блок требований маркетплейсов.**
-5. **Telegram-бот как дополнительный интерфейс.**
-6. **Экспорт отчётов в PDF / Excel.**
-7. **Мониторинг сохранённых адресов.**
-8. **Улучшение карты и фильтров.**
+### V1.2 — Compare mode and decision support
 
-### Compare Mode
+- Compare 2-5 addresses.
+- Unified table for score, confidence, finance, decision, and competitor counts.
+- Transparent deterministic ranking.
+- Saved compare sessions.
+- Export comparison summary to Markdown/CSV or Excel.
 
-Пользователь выбирает 2–5 ранее проверенных адресов и получает сравнительную таблицу:
+### V1.3 — Export and reporting polish
 
-- итоговый score;
-- confidence score;
-- решение;
-- аренда;
-- конкуренты 300/500/700 м;
-- monthly costs;
-- required gross income;
-- net profit;
-- payback months;
-- ключевой риск;
-- сильная сторона;
-- финальная рекомендация.
+- Markdown/PDF/Excel exports.
+- Better report layout without changing deterministic decision logic.
+- Clear assumptions and no-profit-guarantee wording.
+- Fallback report remains supported.
 
-### Marketplace Requirements Module
+### V1.4 — Monitoring saved locations
 
-Отдельный модуль для предварительной проверки требований маркетплейсов:
+- Manual re-analysis of saved locations.
+- Delta view between analyses.
+- No background crawler and no autonomous trendwatcher.
 
-- Ozon;
-- Wildberries;
-- Яндекс Маркет;
-- СДЭК;
-- другие партнёры в будущем.
+### V1.5 — Scoring governance and marketplace rule maturity
 
-Проверяемые параметры:
+- Scoring version comparison.
+- History of scoring rule versions.
+- Marketplace requirements as source-tracked/manual-check rules.
+- No official marketplace compliance guarantee.
 
-- площадь;
-- первый этаж;
-- отдельный вход;
-- складская зона;
-- вывеска;
-- ремонт;
-- видеонаблюдение;
-- зона открытия;
-- юридические ограничения;
-- возможность подъезда курьеров.
+### V2 — City-wide location intelligence for PVZ only
 
-### Telegram-бот
+- H3/grid-based city-wide scan.
+- Heatmap and infrastructure layers.
+- Batch calculation for candidate zones.
+- Map-first UI.
+- PVZ only; no new business types.
+- No ML forecast.
 
-Бот должен позволять:
+### V3 — Data-driven / ML / B2B platform
 
-- быстро отправить адрес;
-- пошагово ввести параметры помещения;
-- получить краткий результат;
-- получить ссылку на полный отчёт в веб-интерфейсе.
+- ML forecast only after dataset and backtesting.
+- Backtesting, network optimization, cannibalization analysis.
+- Multi-business scoring profiles.
+- Auth/multi-user/roles, dashboards, integrations, observability.
 
-Telegram-бот не должен заменять основной интерфейс.
+### Parking Lot / Deferred
 
----
+- Telegram bot.
+- Mobile app.
+- Browser-agent.
+- Avito/Cian parsing without legal basis.
+- Fully autonomous trendwatcher.
+- Premature ML without dataset.
+- Premature multi-business expansion.
+- Premature React rewrite before Streamlit limitations are proven.
 
-## 5.3. V2 — поиск перспективных зон и трендвотчер
-
-### Цель V2
-
-Перейти от анализа конкретного адреса к полноценной location intelligence системе, которая может искать перспективные зоны в городе.
-
-### Основные добавления
-
-1. **City-wide Location Search.**
-2. **H3-гексагоны / heatmap.**
-3. **Trendwatcher module.**
-4. **Infrastructure intelligence.**
-5. **Мониторинг конкурентов и изменений вокруг зон.**
-6. **Улучшенная геоаналитика спроса.**
-7. **Расширение на кофейни, сервисные точки и другие бизнесы.**
-
-### City-wide Location Search
-
-Система строит карту города и делит территорию на H3-гексагоны.
-
-Для каждой ячейки рассчитываются:
-
-- density score;
-- competition score;
-- infrastructure score;
-- accessibility score;
-- rent pressure score;
-- trend score;
-- final zone score.
-
-Выход:
-
-- карта перспективности;
-- топ зон;
-- объяснение факторов;
-- список потенциальных адресов/районов для ручной проверки.
-
-### Trendwatcher Module
-
-Трендвотчер не принимает инвестиционные решения. Он собирает сигналы и превращает их в структурированные признаки.
-
-Источники:
-
-- изменения конкурентов в 2ГИС/Яндекс/OSM;
-- новости маркетплейсов;
-- условия Ozon/WB/Яндекс Маркета;
-- новые ЖК;
-- отзывы конкурентов;
-- локальные новости;
-- поисковый спрос;
-- новые объявления аренды при наличии легальных источников;
-- ручные пользовательские наблюдения.
-
-Выход трендвотчера:
-
-- `trend_score`;
-- список сигналов;
-- дата обновления;
-- источник сигнала;
-- confidence;
-- влияние на рекомендацию.
-
-Пример сигнала:
-
-```json
-{
-  "signal_type": "competitor_reviews_pressure",
-  "business_type": "pvz",
-  "area": "Краснодар, Восточно-Кругликовская",
-  "description": "У ближайших ПВЗ много жалоб на очереди и график работы.",
-  "impact": "positive_for_new_entry",
-  "confidence": 0.72,
-  "source": "reviews",
-  "detected_at": "2026-05-13"
-}
-```
-
----
-
-## 5.4. Final / V3 — ML-прогноз, мультиформатность и продуктовая зрелость
-
-### Цель финальной версии
-
-Сделать полноценную B2B-платформу location intelligence для оценки, сравнения и поиска локаций под разные форматы бизнеса.
-
-### Основные возможности
-
-1. ML-прогноз выручки/заказов/окупаемости.
-2. Поддержка нескольких типов бизнеса:
-   - ПВЗ;
-   - аптеки;
-   - кофейни;
-   - цветы;
-   - зоомагазины;
-   - химчистки;
-   - ремонт техники;
-   - копицентры;
-   - сервисные точки.
-3. Отдельные rule sets и scoring profiles для каждого бизнеса.
-4. Backtesting на исторических данных.
-5. Оптимизация сети точек.
-6. Прогноз каннибализации.
-7. API для интеграции с CRM/BI.
-8. Дашборды для инвестора/партнёра.
-9. Нормальная ролевая модель доступа.
-10. Production monitoring и observability.
-
-### ML-прогноз
-
-ML-прогноз можно делать только после появления исторических данных.
-
-Возможные target-переменные:
-
-- orders_count;
-- revenue;
-- gross_income;
-- net_profit;
-- payback_months;
-- success_probability;
-- close_probability;
-- survival_months.
-
-Модели:
-
-- CatBoostRegressor;
-- CatBoostClassifier;
-- CatBoostRanker;
-- LightGBM;
-- XGBoost;
-- baseline rule-based model.
-
-ML не должен заменять rule-based модель на ранних этапах. Сначала rule-based скоринг, затем ML как улучшение.
+Telegram bot is not a product priority. It may be considered only as a thin
+wrapper over a mature product if a real customer explicitly requests it.
 
 ---
 
@@ -397,7 +273,7 @@ LLM Provider
 - GeoPandas для offline/исследовательских задач
 - Shapely
 - pyproj
-- optional: H3 для будущей версии
+- optional: H3 только для V2 PVZ-only city-wide intelligence после validation
 
 ### AI
 
@@ -413,9 +289,9 @@ LLM Provider
 
 - Streamlit.
 
-### Frontend V1.5+
+### Frontend post-MVP
 
-- React / Next.js.
+- React / Next.js only if Streamlit limitations are proven, likely no earlier than V2.
 - MapLibre GL / Leaflet / Яндекс Карты / 2ГИС MapGL.
 
 ### Deployment
@@ -427,7 +303,7 @@ MVP:
 - Render / Railway / VPS;
 - PostgreSQL managed или local Docker Postgres.
 
-V1.5+:
+Post-MVP:
 
 - VPS / Selectel / Timeweb Cloud / Yandex Cloud;
 - CI/CD;
@@ -523,7 +399,7 @@ V1.5+:
 - `competitors_700m`;
 - `nearest_competitor_distance_m`;
 - `average_competitor_distance_m`;
-- `competitor_strength_score` в V1.5.
+- `competitor_strength_score` только после V1.1 validation, если данные рейтингов/отзывов доказали полезность.
 
 ---
 
@@ -899,7 +775,7 @@ CREATE TABLE reports (
 
 ## 8.7. scoring_versions
 
-В MVP таблица обязательна: каждый анализ сохраняет `scoring_version_id`. UI/admin для управления версиями, сравнение результатов между версиями и история изменений относятся к V1.5.
+В MVP таблица обязательна: каждый анализ сохраняет `scoring_version_id`. UI/admin для управления версиями, сравнение результатов между версиями и история изменений относятся к V1.5 scoring governance.
 
 ```sql
 CREATE TABLE scoring_versions (
@@ -930,7 +806,10 @@ CREATE TABLE marketplace_requirements (
 );
 ```
 
-## 8.9. trend_signals — V2
+## 8.9. trend_signals — deferred / conditional
+
+Autonomous trendwatcher is not active V1.x scope. This table is only a possible
+future option after legal, stable, useful data sources are proven.
 
 ```sql
 CREATE TABLE trend_signals (
@@ -1079,9 +958,10 @@ CREATE TABLE trend_signals (
 
 ## 9.6. POST /api/v1/report/generate
 
-Генерация AI-отчёта по готовому JSON.
+Historical planned endpoint. It is not implemented in MVP / V1.0; report
+generation currently happens inside `POST /api/v1/analyze`.
 
-## 9.7. POST /api/v1/locations/compare — V1.5
+## 9.7. POST /api/v1/locations/compare — V1.2
 
 Сравнение 2–5 адресов.
 
@@ -1239,7 +1119,7 @@ CREATE TABLE trend_signals (
 - Для MVP использовать ручной ввод аренды или легальные API/выгрузки.
 - Указывать источник данных.
 - Не выдавать отчёт как юридическую/финансовую гарантию.
-- Для аптек в будущем нужен отдельный юридический блок.
+- Для аптек и других новых бизнесов в V3 нужен отдельный юридический блок.
 
 ---
 
@@ -1264,7 +1144,7 @@ CREATE TABLE trend_signals (
 - `/api/v1/analyze`;
 - `/api/v1/geocode`;
 - `/api/v1/competitors/search`;
-- `/api/v1/report/generate`;
+- report generation through `/api/v1/analyze` fallback/LLM flow;
 - сохранение анализа в БД;
 - fallback при ошибке AI;
 - `LLM_FAILED` 502 только если отчёт не удалось создать вообще;
@@ -1311,122 +1191,24 @@ MVP считается готовым, если:
 
 # 16. Рекомендуемый roadmap разработки
 
-## Этап 0. Документация и проектирование
+This historical section is superseded by `docs/10_roadmap.md`. The active
+post-MVP sequence is:
 
-Результат:
+1. **V1.1** — stabilization, validation, documentation hardening.
+2. **V1.2** — compare mode and decision support.
+3. **V1.3** — export and reporting polish.
+4. **V1.4** — manual refresh and deltas for saved locations.
+5. **V1.5** — scoring governance and marketplace rule maturity.
+6. **V2** — city-wide location intelligence for PVZ only.
+7. **V3** — data-driven / ML / B2B / multi-business platform after dataset and
+   backtesting.
 
-- README;
-- architecture.md;
-- product_requirements.md;
-- api_contract.md;
-- data_model.md;
-- scoring_methodology.md;
-- roadmap.md;
-- local_setup.md.
+Deferred ideas must not be treated as active roadmap: Telegram bot, mobile app,
+browser-agent, unsupported Avito/Cian parsing, autonomous trendwatcher,
+premature ML, premature multi-business expansion, and premature React rewrite.
 
-## Этап 1. Табличный прототип
-
-Результат:
-
-- CSV/Google Sheets с 30 адресами;
-- ручной скоринг;
-- ручная финансовая модель;
-- первичная проверка весов.
-
-## Этап 2. Backend core без внешних API
-
-Результат:
-
-- FastAPI app;
-- Pydantic-схемы;
-- scoring module;
-- finance module;
-- decision module;
-- tests.
-
-## Этап 3. База данных
-
-Результат:
-
-- PostgreSQL + PostGIS;
-- SQLAlchemy models;
-- Alembic migrations;
-- CRUD для locations, POIs, scores, finance, reports.
-
-## Этап 4. Геокодинг и конкуренты
-
-Результат:
-
-- geocoding service;
-- competitors search;
-- deduplication;
-- distance calculation;
-- caching;
-- external API error handling.
-
-## Этап 5. AI-отчёт
-
-Результат:
-
-- LLM provider abstraction;
-- OpenAI provider;
-- prompt versioning;
-- structured report input;
-- fallback report;
-- report persistence.
-
-## Этап 6. UI MVP
-
-Результат:
-
-- Streamlit UI;
-- input form;
-- result page;
-- history page;
-- basic map;
-- checklists.
-
-## Этап 7. Тестирование и портфолио-полировка
-
-Результат:
-
-- тест 30–50 адресов;
-- fixtures;
-- screenshots;
-- README;
-- demo data;
-- dockerized launch;
-- portfolio case study.
-
-## Этап 8. V1.5
-
-Результат:
-
-- compare mode;
-- Telegram bot;
-- PDF/Excel export;
-- better marketplace module;
-- monitoring saved locations.
-
-## Этап 9. V2
-
-Результат:
-
-- H3 heatmap;
-- city-wide search;
-- trendwatcher;
-- infrastructure intelligence;
-- support for more business types.
-
-## Этап 10. V3
-
-Результат:
-
-- ML прогноз;
-- backtesting;
-- network optimization;
-- production dashboard;
-- multi-tenant product readiness.
+Telegram bot is not a product priority. It may be considered only as a thin
+wrapper over a mature product if a real customer explicitly requests it.
 
 ---
 
@@ -1487,7 +1269,7 @@ address → data → scoring → finance → report
 Затем расширять:
 
 ```text
-compare → monitor → search zones → trendwatch → ML forecast
+validation → compare → export → manual refresh → scoring governance → PVZ city-wide intelligence → dataset/backtesting → ML forecast
 ```
 
 Не начинать с автономных агентов, сложного ML или полного парсинга интернета. Это должно быть инженерно контролируемое решение, где каждый вывод можно объяснить, воспроизвести и проверить.

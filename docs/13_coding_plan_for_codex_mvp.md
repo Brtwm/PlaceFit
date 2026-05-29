@@ -1,5 +1,11 @@
 # Coding Plan для Codex — MVP PlaceFit
 
+> Status: historical MVP implementation plan.
+>
+> MVP / V1.0 is now considered local-demo-ready. This document remains useful
+> as build history and implementation context, but it is not the active future
+> roadmap. For post-MVP development use [docs/10_roadmap.md](10_roadmap.md).
+
 ## Общие правила
 
 - Следовать структуре из `docs/03_architecture.md`.

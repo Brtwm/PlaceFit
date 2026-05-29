@@ -1,32 +1,56 @@
-# Trendwatcher — будущий модуль (V2)
+# Trendwatcher — deferred / conditional idea
 
-## Почему не MVP
+## Status
 
-1. Нет стабильных источников данных для мониторинга.
-2. Требует cron/scheduler для периодического сбора.
-3. Требует значительной инфраструктуры (очереди, хранение сигналов).
-4. MVP фокус — оценка конкретного адреса, не мониторинг трендов.
+Trendwatcher is **not** part of the active V1.x roadmap. It must not be added as
+an autonomous crawler, background parser, or near-term product feature.
 
-## Назначение
+V1.4 covers only **manual refresh of saved locations** and comparison of deltas
+between analyses. That is intentionally different from a fully autonomous
+trendwatcher.
 
-Trendwatcher **не принимает решений**. Он собирает сигналы из внешних источников и превращает их в структурированные признаки, которые дополняют scoring.
+## Why Deferred
 
-## Источники сигналов
+1. Stable legal data sources are not proven.
+2. Continuous monitoring needs scheduler, queues, storage, and operating
+   discipline.
+3. Background crawling can create legal and data-quality risk.
+4. MVP value must be validated first through one-address PVZ analysis.
+5. City-wide intelligence in V2 should remain PVZ-only and deterministic before
+   adding automated trend signals.
 
-| Источник | Тип сигнала | Сложность |
-|----------|------------|-----------|
-| 2ГИС / Яндекс / OSM | Открытие/закрытие конкурентов | Средняя |
-| Отзывы конкурентов | Проблемы с обслуживанием | Средняя |
-| Новости маркетплейсов | Изменение условий Ozon/WB | Низкая |
-| Данные о новых ЖК | Рост спроса в районе | Средняя |
-| Поисковый спрос | Yandex Wordstat по району | Высокая |
-| Локальные новости | Инфраструктурные изменения | Высокая |
-| Ручные наблюдения | Пользовательский input | Низкая |
+## Possible Future Role
 
-## Модель данных
+If the product matures and legal, stable data sources are available,
+trendwatcher could collect structured signals that support deterministic scoring
+or city-wide PVZ intelligence.
+
+It must not:
+
+- make decisions;
+- replace deterministic scoring;
+- invent facts;
+- scrape unsupported sources;
+- run in ordinary tests;
+- present unverified external signals as certain.
+
+## Candidate Signal Sources
+
+These are examples for future evaluation, not active commitments.
+
+| Source | Signal type | Requirement before use |
+|---|---|---|
+| 2GIS / OSM | Competitor opening/closing | Legal use, rate limits, source freshness |
+| Marketplace news | Rule changes | Official source URL and retrieved date |
+| New residential projects | Demand context | Stable dataset and manual validation |
+| Competitor reviews | Service pressure | Legal access and anti-hallucination checks |
+| User observations | Manual signal | Explicit user-entered source |
+
+## Candidate Data Model
+
+Do not implement this in V1.x. A future table could look like:
 
 ```sql
--- Уже определена в data_model.md как V2 таблица
 CREATE TABLE trend_signals (
     id SERIAL PRIMARY KEY,
     business_type TEXT NOT NULL,
@@ -35,8 +59,8 @@ CREATE TABLE trend_signals (
     h3_index TEXT,
     signal_type TEXT NOT NULL,
     description TEXT,
-    impact TEXT,          -- 'positive_for_new_entry', 'negative_for_new_entry', 'neutral'
-    confidence NUMERIC,   -- 0.0 - 1.0
+    impact TEXT,
+    confidence NUMERIC,
     source TEXT,
     source_url TEXT,
     detected_at TIMESTAMP,
@@ -44,30 +68,10 @@ CREATE TABLE trend_signals (
 );
 ```
 
-## trend_score
+## Relationship To Roadmap
 
-```
-trend_score = weighted_sum(signal_impacts) normalized to 0-100
-```
-
-Влияет на zone_score в city-wide search, но НЕ на location_score в MVP.
-
-## Пример сигнала
-
-```json
-{
-  "signal_type": "competitor_closed",
-  "business_type": "pvz",
-  "area": "Краснодар, ЮМР",
-  "description": "Wildberries на ул. Героев Разведчиков закрылся (по данным 2ГИС)",
-  "impact": "positive_for_new_entry",
-  "confidence": 0.85,
-  "source": "2gis_monitoring",
-  "detected_at": "2026-05-10"
-}
-```
-
-## Мониторинг (V1.5 → V2)
-
-- V1.5: ручной мониторинг сохранённых адресов (перезапуск анализа).
-- V2: автоматический мониторинг с алертами при значимых изменениях.
+- **V1.4**: manual refresh of saved addresses and delta comparison only.
+- **V2**: PVZ-only city-wide intelligence; trend signals remain optional and
+  conditional.
+- **V3**: data-driven platform work may revisit trendwatcher if the data and
+  legal basis exist.

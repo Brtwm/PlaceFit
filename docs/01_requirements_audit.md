@@ -1,102 +1,68 @@
-# Аудит требований — PlaceFit
+# Requirements Audit — Historical Note
 
-## Источники
+## Status
 
-1. **Оригинальное ТЗ заказчика** использовалось как входной источник, но не хранится в репозитории. Основной source of truth: `docs/reference/developer_tz.md`.
-2. **ТЗ разработчика** (`docs/reference/developer_tz.md`) — переработанное ТЗ, 1462 строки.
+This document is a historical requirements audit created before MVP completion.
+It is useful as context, but it is **not** the active roadmap or current source
+of truth for future development.
 
-## Общая оценка ТЗ разработчика
+Current sources of truth:
 
-**Качество: высокое.** ТЗ детальное, структурированное, с конкретными формулами, SQL-схемами, API-примерами и roadmap.
+1. [README](../README.md) — current project status and quickstart.
+2. [Product overview](00_overview.md) — concise current product overview.
+3. [MVP scope](02_mvp_scope.md) — implemented MVP boundaries.
+4. [Roadmap](10_roadmap.md) — active post-MVP roadmap.
 
-## Сильные стороны
+The original developer requirements live in
+[docs/reference/developer_tz.md](reference/developer_tz.md). That file is also
+historical and has been superseded by the current docs and roadmap.
 
-### 1. Чёткое разделение версий
-MVP/V1.5/V2/V3 — каждая версия имеет конкретный scope и цель. Нет scope creep.
+## What Remains Valid
 
-### 2. Принцип «AI объясняет, код считает»
-Зафиксирован явно. LLM не принимает решений, не генерирует факты. Это правильный подход для финансового инструмента.
+- The core product idea: decision support for PVZ location evaluation.
+- The MVP focus: one Krasnodar address, `business_type = "pvz"`.
+- The principle: AI explains, deterministic code decides.
+- Provider abstraction for external APIs.
+- Fallback-first operation without mandatory real provider keys.
+- Scoring versioning from MVP.
+- Manual marketplace verification.
+- No profit guarantees.
 
-### 3. Конкретные формулы и пороги
-Scoring weights, finance formulas, decision thresholds — всё определено числами, а не абстракциями.
+## What Changed After MVP Completion
 
-### 4. Data model с SQL
-Готовые CREATE TABLE statements. Можно сразу создавать миграции.
+- MVP / V1.0 is now considered implemented and local demo ready.
+- README, Docker Compose, Streamlit UI, backend, DB, fake providers, optional
+  real providers, and fallback/optional LLM report are current implemented
+  scope, not future work.
+- The old coarse roadmap `MVP -> V1.5 -> V2 -> V3` has been replaced by the
+  staged post-MVP roadmap in [docs/10_roadmap.md](10_roadmap.md).
+- First post-MVP step is V1.1 stabilization/manual validation, not a feature
+  expansion.
+- Compare mode is V1.2.
+- Export/reporting polish is V1.3.
+- Saved-location refresh/delta monitoring is V1.4.
+- Scoring governance and marketplace rule maturity are V1.5.
+- City-wide intelligence remains V2 and PVZ-only.
+- ML, multi-business, auth/multi-user, and B2B platform work are V3.
 
-### 5. API contract с примерами
-Request/response JSON для основных endpoints.
+## Deferred Decisions
 
-### 6. Чек-лист ручной проверки
-20 пунктов — конкретный и полезный. Показывает, что продукт не pretends to replace ручную проверку.
+Telegram bot is not a product priority. It may be considered only as a thin
+wrapper over a mature product if a real customer explicitly requests it.
 
-### 7. Fallback-стратегия
-Fallback для LLM, fallback для геокодинга — продуманная degradation.
+The following ideas are deferred or conditional:
 
-### 8. Scoring versioning
-Версионирование правил скоринга с первого дня — зрелое решение.
+- Telegram bot.
+- Mobile app.
+- Browser-agent.
+- Avito/Cian parsing without legal basis.
+- Fully autonomous trendwatcher.
+- Premature ML without dataset/backtesting.
+- Premature multi-business expansion.
+- Premature React rewrite before Streamlit limitations are proven.
 
-## Слабые стороны
+## Audit Outcome
 
-### 1. Competition score — пороги неточны
-ТЗ даёт примеры («0 конкурентов в 300 м → высокий балл»), но не даёт точные числовые значения для каждого диапазона. Нужно доопределить.
-
-**Рекомендация**: определить точные баллы в `docs/06_scoring_model.md`.
-
-### 2. Demand score — сильно зависит от ручного ввода
-`high_density_area` и `new_residential_area` — субъективные флаги пользователя. В MVP это приемлемо, но confidence_score должен это отражать.
-
-**Рекомендация**: зафиксировано. Confidence снижается при ручных признаках.
-
-### 3. Error response format не определён
-API contract показывает success response, но нет стандарта для ошибок (validation errors, geocoding failures, API timeouts).
-
-**Рекомендация**: определить в `docs/05_api_contract.md`.
-
-### 4. Marketplace requirements — слишком абстрактны для MVP
-ТЗ упоминает проверку требований маркетплейсов, но в MVP все статусы будут `needs_manual_check`. Реальная ценность появится в V1.5.
-
-**Рекомендация**: в MVP — упрощённый модуль с hardcoded правилами. Полный модуль — V1.5.
-
-### 5. Нет конкретики по accessibility score
-«Парковка, остановка рядом, видимость, удобный вход, маршрут жителей» — но нет точных баллов за каждый фактор.
-
-**Рекомендация**: доопределить в `docs/06_scoring_model.md`.
-
-### 6. Тестирование — только направления
-Перечислены модули для тестирования, но нет конкретных test cases, fixtures или edge cases.
-
-**Рекомендация**: детализировать в `docs/09_testing_strategy.md`.
-
-## Что отсутствует в ТЗ
-
-| Аспект | Статус | Действие |
-|--------|--------|---------|
-| Error response format | Отсутствует | Добавлено в `docs/05_api_contract.md` |
-| Точные баллы competition score | Неполные | Доопределены в `docs/06_scoring_model.md` |
-| Точные баллы accessibility score | Неполные | Доопределены в `docs/06_scoring_model.md` |
-| Точные баллы premises score | Неполные | Доопределены в `docs/06_scoring_model.md` |
-| Confidence score weights | Примерные | Доопределены в `docs/06_scoring_model.md` |
-| Prompt template для LLM | Отсутствует | Создан в `docs/08_ai_report.md` |
-| Конкретные test cases | Отсутствуют | Создано в `docs/09_testing_strategy.md` |
-| Deployment инструкция | Отсутствует | Планируется в `README.md` после реализации MVP |
-| Rate limiting конфигурация | Отсутствует | Отмечено как задача реализации |
-| Логирование стандарт | Отсутствует | Отмечено как задача реализации |
-
-## Сравнение: исходное ТЗ vs. developer-версия
-
-Ниже перечислены только явно заявленные или аккуратно уточнённые требования. Документ не приписывает заказчику поддержку всех городов, гарантию прибыли или автономного агента как обязательные требования.
-
-| Аспект | Исходное ТЗ заказчика | Уточнённая developer-версия |
-|---|---|---|
-| Название | AI Location Agent | PlaceFit — geoanalytics decision-support system |
-| Основной сценарий | Анализ адреса под ПВЗ в Краснодаре | Сохранено как MVP |
-| Будущие бизнесы | Аптеки, кофейни, сервисные точки в будущем | Перенесено в V2/V3 |
-| Роль AI | AI-отчёт на основе фактов | Уточнено: LLM только объясняет JSON |
-| Геоаналитика | Конкуренты и радиусы | Расширено: PostGIS, provider abstraction, source freshness |
-| Финансы | Базовая модель расходов и окупаемости | Расширено: confidence, fallback, versioning |
-| Трендвотчер | Не является обязательным MVP-требованием | Перенесён в V2 |
-| ML-прогноз | Не входит в MVP | Зафиксирован как V3 после данных |
-
-## Итог
-
-ТЗ разработчика — качественная основа для реализации. Основные доработки касаются числовых деталей scoring model (точные баллы по компонентам), error handling в API, и конкретных test cases. Все доработки зафиксированы в соответствующих docs/ файлах.
+The initial requirements were strong enough to guide the MVP build, but their
+versioning and future roadmap are now historical. Future Codex work should use
+the narrower, validation-first roadmap in [docs/10_roadmap.md](10_roadmap.md).

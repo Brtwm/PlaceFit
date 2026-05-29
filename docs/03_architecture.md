@@ -5,9 +5,9 @@
 ```
 User → Streamlit UI → FastAPI Backend → Services → PostgreSQL/PostGIS
                                             ↓
-                                      External APIs (2GIS, Yandex, OSM)
+                               Provider abstractions (fake / 2GIS / OSM)
                                             ↓
-                                      LLM Provider (OpenAI)
+                        Report provider (fallback / OpenAI-compatible LLM)
 ```
 
 ## Структура проекта
@@ -22,7 +22,7 @@ PlaceFit/
 │   │   │   ├── locations.py    # GET /api/v1/locations, GET /api/v1/locations/{id}
 │   │   │   ├── geocode.py      # POST /api/v1/geocode
 │   │   │   ├── competitors.py  # POST /api/v1/competitors/search
-│   │   │   └── report.py       # POST /api/v1/report/generate
+│   │   │   └── report.py       # future report regeneration endpoint, not MVP
 │   │   └── deps.py
 │   ├── services/
 │   │   ├── geocoding.py        # Геокодинг + кэш
@@ -39,14 +39,14 @@ PlaceFit/
 │   │   ├── geocoder/
 │   │   │   ├── base.py         # Protocol
 │   │   │   ├── dgis.py         # 2GIS
-│   │   │   └── yandex.py       # Yandex
+│   │   │   └── fake.py         # deterministic demo/fallback fixtures
 │   │   ├── poi_search/
 │   │   │   ├── base.py
 │   │   │   ├── dgis.py
 │   │   │   └── osm.py
 │   │   └── llm/
 │   │       ├── base.py
-│   │       ├── openai.py
+│   │       ├── openai_compatible.py
 │   │       └── fallback.py
 │   ├── models/                 # SQLAlchemy ORM
 │   │   ├── location.py
@@ -89,13 +89,13 @@ PlaceFit/
      ↓
 2. Geocoding
    ├── Check cache (DB)
-   ├── Call 2GIS API (or Yandex fallback)
+   ├── Use fake demo provider by default or optional 2GIS provider
    ├── Normalize address
    └── Validate city = Краснодар
      ↓
 3. Competitor search
    ├── Check cache (DB, TTL 7-14 дней)
-   ├── Call 2GIS API (categories: Ozon, WB, Yandex Market, СДЭК, Boxberry, Почта, постаматы)
+   ├── Use fake demo provider by default or optional 2GIS/OSM provider
    ├── Deduplicate (by external_id + distance threshold)
    └── Save POIs to DB
      ↓
@@ -125,7 +125,7 @@ PlaceFit/
      ↓
 10. Build analysis JSON
      ↓
-11. AI report (OpenAI → fallback template)
+11. Report generation (OpenAI-compatible LLM when enabled → fallback template)
      ↓
 12. Save all to DB
      ↓
@@ -138,24 +138,28 @@ PlaceFit/
 Каждый внешний сервис за Protocol-интерфейсом. Позволяет подменять, мокать, добавлять fallback.
 
 ### Scoring versioning
-В MVP правила хранятся в таблице `scoring_versions`, а каждый анализ привязан к `scoring_version_id`. UI/admin для управления версиями, сравнение результатов между версиями и история изменений относятся к V1.5.
+В MVP правила хранятся в таблице `scoring_versions`, а каждый анализ привязан к `scoring_version_id`. Управление версиями, сравнение результатов между версиями и история изменений относятся к V1.5 scoring governance после V1.1 validation, V1.2 compare mode, V1.3 export polish и V1.4 saved-location refresh.
 
 ### Кэш в БД
 Геокодинг TTL 30 дней, POI TTL 7–14 дней. PostgreSQL, не Redis (упрощение для MVP).
 
 ### Fallback chains
 ```
-Geocoding: 2GIS → Yandex → error с сообщением
-POI: 2GIS → OSM → error с сообщением
-LLM: OpenAI → template fallback
+Geocoding: fake by default; optional 2GIS when configured; clear error on failure
+POI: fake by default; optional 2GIS or OSM when configured
+LLM: OpenAI-compatible provider when enabled → template fallback
 ```
 
-## Extension points (будущее)
+## Extension points (post-MVP)
 
 | Точка | Версия | Как расширять |
 |-------|--------|--------------|
-| Новые бизнесы | V3 | Новые scoring rules + business_type |
-| Compare mode | V1.5 | Новый endpoint + UI page |
-| H3/Heatmap | V2 | Новый модуль + batch scoring |
-| Trendwatcher | V2 | Новый сервис + таблица signals |
-| ML forecast | V3 | Новый provider, не заменяет rule-based |
+| Manual validation | V1.1 | Validation cases and known limitations |
+| Compare mode | V1.2 | Compare API/UI over deterministic per-address analyses |
+| Export/reporting | V1.3 | Markdown/PDF/Excel from existing analysis JSON |
+| Saved location refresh | V1.4 | Re-run analysis and show deltas |
+| Scoring governance | V1.5 | Version comparison and auditable rule changes |
+| Marketplace maturity | V1.5 | Source-tracked manual-check rules |
+| H3/Heatmap | V2 | PVZ-only city-wide module after validation |
+| New businesses | V3 | Separate scoring profiles after PVZ validation |
+| ML forecast | V3 | Dataset/backtesting-driven layer, not a rule-based replacement |

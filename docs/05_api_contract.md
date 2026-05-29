@@ -258,6 +258,10 @@ http://localhost:8000/api/v1
 
 ## POST /api/v1/report/generate
 
+Status: **not implemented in MVP / V1.0**. Report generation currently happens
+inside `POST /api/v1/analyze`. A separate regeneration endpoint may be added in
+a future reporting iteration if there is a product need.
+
 Генерация AI-отчёта по готовому JSON (для перегенерации).
 
 ### Request
@@ -278,11 +282,16 @@ http://localhost:8000/api/v1
 
 ---
 
-## Будущие endpoints (НЕ MVP)
+## Future endpoints (not MVP / V1.0)
 
 | Endpoint | Версия | Назначение |
 |----------|--------|-----------|
-| POST /api/v1/locations/compare | V1.5 | Сравнение 2–5 адресов |
-| GET /api/v1/monitoring/alerts | V1.5 | Алерты мониторинга |
-| GET /api/v1/zones/heatmap | V2 | H3 heatmap данные |
-| GET /api/v1/trends | V2 | Сигналы trendwatcher |
+| POST /api/v1/locations/compare | V1.2 | Сравнение 2–5 адресов |
+| POST /api/v1/exports | V1.3 | Markdown/PDF/Excel export |
+| POST /api/v1/locations/{id}/reanalyze | V1.4 | Manual refresh saved location |
+| GET /api/v1/locations/{id}/deltas | V1.4 | Delta between saved analyses |
+| GET /api/v1/scoring-versions/compare | V1.5 | Scoring rule version comparison |
+| GET /api/v1/zones/heatmap | V2 | PVZ-only city-wide H3/grid data |
+
+Autonomous trendwatcher endpoints are deferred/conditional and should not be
+added until legal, stable, useful data sources are proven.

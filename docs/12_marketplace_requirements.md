@@ -1,52 +1,62 @@
-# Требования маркетплейсов — PlaceFit
+# Marketplace Requirements — PlaceFit
 
-## Концепция
+## Concept
 
-Каждый маркетплейс (Ozon, Wildberries, Яндекс Маркет) имеет свои требования к помещению для ПВЗ. Система проверяет базовые параметры и указывает, что нужно проверить вручную.
+Marketplaces such as Ozon, Wildberries, and Yandex Market have operational
+requirements for pickup points. PlaceFit can help the user remember what to
+verify, but it must not claim official compliance.
 
-## MVP: упрощённый модуль
+In MVP / V1.0 all marketplace checks return `needs_manual_check`.
 
-В MVP все проверки возвращают `needs_manual_check`, т.к.:
-- Требования маркетплейсов часто меняются.
-- Зоны открытия проверяются на сайтах маркетплейсов.
-- Юридические условия индивидуальны.
+## MVP Behavior
 
-MVP фиксирует базовые параметры помещения, но не делает вывод `passed` / `failed` по требованиям маркетплейсов без подтверждённых официальных правил.
+MVP does not produce `passed` or `failed` marketplace compliance decisions.
 
-В MVP в `marketplace_requirements` входят только:
-- Ozon;
-- Wildberries;
-- Yandex Market.
+Reasons:
 
-Другие пункты выдачи учитываются только как POI/конкуренты/соседние точки выдачи, но не как marketplace requirements MVP.
+- Requirements change.
+- Opening zones are checked on marketplace-owned systems.
+- Legal and operational terms can be individual.
+- The project does not store verified official rules yet.
 
-## MVP: статус требований
+MVP response includes only:
 
-В MVP система не должна утверждать точное соответствие помещения требованиям маркетплейса.  
-Она должна фиксировать базовые параметры помещения и возвращать статус `needs_manual_check`.
+- `ozon`;
+- `wildberries`;
+- `yandex_market`.
 
-Конкретные требования Ozon, Wildberries и Яндекс Маркета должны храниться как конфигурируемые правила только после проверки по официальным источникам.
+Other pickup networks can appear as POI/competitors, but they are not MVP
+marketplace requirement modules.
 
-Ниже — иллюстративный пример структуры правил, а не актуальные требования маркетплейсов. Значения нельзя использовать в продуктовой логике до подтверждения по официальным источникам.
-| Маркетплейс | Площадь min | Площадь рек. | Первый этаж | Отд. вход | Склад | Вывеска |
-|-------------|-------------|-------------|-------------|-----------|-------|---------|
-| Ozon | 15 м² | 30–50 м² | Да* | Да | Да | Да |
-| Wildberries | 20 м² | 40–60 м² | Да* | Да | Желательно | Да |
-| Яндекс Маркет | 15 м² | 25–40 м² | Да* | Да | Нет | Да |
+## Required Wording
 
-*Исключения возможны по согласованию.
+Use wording like:
 
-> ⚠️ Данные примерные и неактуализированные. Актуальные требования нужно подтверждать по официальным источникам перед добавлением в конфиг или БД.
+```text
+Требования маркетплейсов нужно сверить с официальными источниками.
+PlaceFit не подтверждает юридическое или операционное соответствие.
+```
 
-## Хранение требований
+Do not use wording that implies official approval, legal certainty, or automatic
+marketplace acceptance.
 
-Таблица `marketplace_requirements` (см. data_model.md):
-- `requirement_key`: 'min_area', 'first_floor_required', 'separate_entrance_required'
-- `requirement_value`: JSONB с параметрами
-- `valid_from` / `valid_to`: период актуальности
-- `source_url`: ссылка на официальный источник
+## Illustrative Rules Are Not Product Logic
 
-## Логика проверки MVP
+Any example table of area, floor, entrance, storage, signage, video surveillance,
+or courier access requirements is illustrative until source-tracked and manually
+verified.
+
+Values must not be hardcoded as truth until they have:
+
+- marketplace;
+- rule text;
+- official or approved `source_url`;
+- `retrieved_at` or `valid_from`;
+- optional `valid_to`;
+- `needs_manual_check=true`;
+- review notes for legal/product uncertainty.
+
+## MVP Service Logic
 
 ```python
 def check_marketplace(location):
@@ -71,11 +81,23 @@ def check_marketplace(location):
     return results
 ```
 
-Конкретные `min_area`, `first_floor_required`, `separate_entrance_required` и похожие правила нельзя хардкодить как истину до сверки с официальными источниками.
+## V1.5 Maturity
 
-## V1.5: расширенный модуль
+V1.5 may make marketplace rules more auditable and versioned, but still not an
+official compliance engine.
 
-- Полный набор проверяемых параметров (видеонаблюдение, подъезд курьеров, юрлицо).
-- Конфигурируемые правила в БД.
-- Статусы: `passed`, `failed`, `needs_manual_check`.
-- Обновление требований без деплоя (через БД).
+Scope:
+
+- Source-tracked marketplace rule records.
+- Rule version history.
+- Manual-check status retained.
+- Optional internal config/admin interface only if it reduces real maintenance
+  pain.
+- Comparison of rule versions when sources change.
+
+Acceptance criteria:
+
+- Marketplace rules include source URL and retrieval/validity dates.
+- Old analyses remain interpretable.
+- UI/report wording still says manual verification is required.
+- No official compliance guarantee is implied.

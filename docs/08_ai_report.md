@@ -6,6 +6,10 @@ LLM **объясняет результаты расчётов** человеч�
 
 MVP использует OpenAI-compatible provider abstraction. Конкретный runtime-provider задаётся через `.env`; LLM по умолчанию выключен, а fallback report должен работать без LLM API key.
 
+Fallback report is a first-class successful response. It is not an error state
+when LLM is disabled, no LLM key is configured, or the LLM provider is
+unavailable but the deterministic fallback report succeeds.
+
 ## JSON input contract
 
 LLM получает structured JSON (результат полного анализа):
@@ -168,7 +172,8 @@ LLM_MODEL=
 - Чистая прибыль: {net_profit} ₽
 - Окупаемость: {payback_months} мес
 
-Для полного AI-отчёта повторите анализ позже.
+Для AI-отчёта от подключённого LLM provider повторите анализ позже или включите
+LLM в `.env`.
 ```
 
 Статус в response: `"status": "fallback"`.
