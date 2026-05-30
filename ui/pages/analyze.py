@@ -51,6 +51,7 @@ def main() -> None:
             ):
                 response = client.analyze(payload)
             if isinstance(response, ApiError):
+                st.session_state.pop("last_analysis_result", None)
                 _render_api_error(response)
             else:
                 st.session_state["last_analysis_result"] = response

@@ -77,16 +77,24 @@ ordinary tests:
 Real provider checks are manual/external only:
 
 ```bash
-pytest -m external
+uv run pytest -m external
 ```
 
 They require explicit environment variables such as
-`RUN_EXTERNAL_PROVIDER_TESTS=true` and provider keys where applicable.
+`RUN_EXTERNAL_PROVIDER_TESTS=true` and provider keys where applicable. They are
+excluded from ordinary `uv run pytest -v --tb=short` runs by the `external`
+marker in `pyproject.toml` and must not be treated as required local gates
+unless intentionally enabled.
 
 ## V1.1 Manual Validation Strategy
 
-V1.1 turns manual validation into a first-class artifact. Validate 30-50 real
-Krasnodar addresses before expanding scope.
+V1.1 turned manual validation into a first-class artifact. The original target
+was 30-50 real Krasnodar addresses, but that full benchmark is deferred by owner
+decision for the V1.1 completion declaration.
+
+The present V1.1 release does not include a completed 30-50 case validation set.
+If broader validation resumes, record real cases, manual competitor checks,
+mismatch notes, and verdicts before claiming benchmark readiness.
 
 ### Address selection
 
@@ -143,8 +151,11 @@ equivalent table with these fields:
 
 ### Acceptance for V1.1 validation
 
-- At least 30 validation cases are recorded.
+- The 30-50 case benchmark is either recorded or explicitly deferred by owner
+  decision.
 - At least five cases cover edge/ambiguous/boundary behavior.
+- Manual competitor checks, mismatch notes, and verdicts are recorded; seed or
+  pending rows do not count as completed validation cases.
 - Known limitations are listed in docs.
 - Any high-severity issue has a follow-up task.
 - README quickstart still works from fresh clone.
@@ -182,3 +193,7 @@ docker compose config
 # Manual external provider checks only
 uv run pytest -m external
 ```
+
+`uv run pytest -m external` is optional/manual external-provider evidence. It is
+not part of ordinary V1.1 automated gates unless external provider checks are
+intentionally enabled for that run.

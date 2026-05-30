@@ -12,7 +12,7 @@ Do not use this file as a current implementation plan.
 
 README should stay concise and honest:
 
-- PlaceFit is MVP / V1.0 local demo ready.
+- PlaceFit V1.1 stabilization is complete.
 - Demo path works without real API keys and without LLM key.
 - Deterministic backend code calculates score, confidence, finance, and
   decision.
@@ -28,7 +28,7 @@ Use this concise roadmap wording:
 
 ```text
 MVP / V1.0: local demo ready
-V1.1: stabilization and manual validation
+V1.1: stabilization complete; broader manual benchmark deferred
 V1.2: compare mode
 V1.3: export/reporting polish
 V1.4: saved-location refresh and deltas

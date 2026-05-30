@@ -5,7 +5,7 @@
 **PlaceFit** is a geoanalytics decision-support system for evaluating one
 commercial location for a PVZ / ПВЗ pickup point.
 
-Current status: **MVP / V1.0 local demo ready**. The implemented demo path uses
+Current status: **V1.1 stabilization complete**. The implemented demo path uses
 FastAPI, deterministic backend services, PostgreSQL/PostGIS, fake/fallback
 providers, optional real providers, optional LLM with fallback report, Streamlit
 UI, map, checklist, Docker Compose, and saved analysis history.
@@ -146,7 +146,8 @@ They require explicit environment variables and must not run in ordinary tests.
 
 Use `docs/10_roadmap.md` as the active future plan:
 
-1. V1.1 stabilization and manual validation.
+1. V1.1 stabilization complete; deferred 30-50 case manual benchmark remains
+   future evidence work.
 2. V1.2 compare mode.
 3. V1.3 export/reporting polish.
 4. V1.4 manual refresh and deltas for saved locations.

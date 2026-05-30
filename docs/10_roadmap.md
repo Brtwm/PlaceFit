@@ -32,7 +32,9 @@ Implemented scope:
 
 Known limitations:
 
-- No validated manual benchmark dataset yet.
+- No validated 30-50 case manual benchmark dataset yet.
+- V1.1 stabilization is complete by owner acceptance; the broader 30-50 case
+  benchmark remains deferred and must not be presented as completed evidence.
 - Demand inputs such as high density/new residential area are user-provided.
 - Marketplace requirements are `needs_manual_check`.
 - Real provider quality depends on external data freshness and coverage.
@@ -59,6 +61,10 @@ analysis is useful and explainable.
 - Fresh-clone demo walkthrough.
 - Lightweight docs checklist before releases.
 
+**Current evidence status:** V1.1 is accepted as complete. A broader 30-50 case
+manual benchmark is deferred and is not claimed as completed validation
+evidence.
+
 **Non-goals:**
 
 - No compare mode.
@@ -67,7 +73,10 @@ analysis is useful and explainable.
 
 **Acceptance criteria:**
 
-- Manual validation table or documents exist.
+- Manual validation table or documents exist and distinguish completed cases
+  from seed/pending cases.
+- 30-50 real validation cases are recorded or explicitly deferred by owner
+  decision without being presented as completed benchmark evidence.
 - Known errors/limitations are recorded.
 - Demo path is reproducible from fresh clone.
 - Ordinary tests pass.

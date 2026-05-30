@@ -5,9 +5,14 @@ Krasnodar as a pickup point (`pvz`) location. The backend deterministically
 calculates competitors, score, confidence, finance, and decision; an LLM, when
 enabled, only explains prepared analysis JSON.
 
-Status: **MVP / V1.0 local demo ready**. The normal demo path works without
+Status: **V1.1 stabilization complete**. The normal demo path works without
 external API keys and without an LLM key by using fake geodata providers and a
 fallback report.
+
+V1.1 is accepted as complete based on stabilization work, documentation
+hardening, report/map review, and fresh-clone demo checks. The 30-50 case manual
+benchmark remains deferred and should not be described as completed validation
+evidence.
 
 ## MVP Scope
 
@@ -213,7 +218,8 @@ explanatory text. It does not calculate score, finance, confidence, or decision.
 Detailed future planning lives in [Roadmap](docs/10_roadmap.md).
 
 - **MVP / V1.0**: implemented, local demo ready.
-- **V1.1**: stabilization, validation, documentation hardening.
+- **V1.1**: stabilization, documentation hardening, report/map review, and
+  fresh-clone checks are complete.
 - **V1.2**: compare mode and decision support.
 - **V1.3**: export and reporting polish.
 - **V1.4**: manual refresh and deltas for saved locations.
@@ -230,6 +236,9 @@ premature multi-business expansion, and premature React rewrite are deferred.
 - `expected_gross_income_by_user` is a user hypothesis, not a system forecast.
 - Marketplace requirements require manual verification from official sources.
 - Geodata quality depends on provider freshness and coverage.
+- Manual competitor checks are approximate evidence, not exact ground truth.
+- The 30-50 case manual benchmark is deferred and should not be described as
+  completed validation evidence.
 - MVP supports only Krasnodar, `pvz`, and one-address analysis.
 
 ## Security Notes
