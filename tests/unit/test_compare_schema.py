@@ -121,10 +121,12 @@ def test_compare_response_contains_deterministic_ranking_rules() -> None:
     )
 
     assert response.ranking_rules.uses_llm is False
+    assert response.ranking_rules.version == "v1.2-2"
     assert [key.field for key in response.ranking_rules.sort_keys] == [
         "score.total_score",
         "score.confidence_score",
         "score.decision",
+        "finance.net_profit",
         "finance.payback_months",
         "input_index",
     ]

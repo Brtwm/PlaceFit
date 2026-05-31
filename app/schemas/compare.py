@@ -12,7 +12,7 @@ from app.schemas.finance import FinanceResult
 from app.schemas.location import LocationInfo
 from app.schemas.score import ScoreResult
 
-COMPARE_RANKING_VERSION = "v1.2-1"
+COMPARE_RANKING_VERSION = "v1.2-2"
 COMPARE_DECISION_SEVERITY_ORDER = [
     DECISION_RULES.consider,
     DECISION_RULES.check_more,
@@ -135,6 +135,12 @@ DEFAULT_COMPARE_RANKING_RULES = CompareRankingRules(
             direction="asc",
             nulls="none",
             description="Decision severity order breaks remaining ties.",
+        ),
+        CompareRankingSortKey(
+            field="finance.net_profit",
+            direction="desc",
+            nulls="last",
+            description="Higher known net profit breaks remaining ties.",
         ),
         CompareRankingSortKey(
             field="finance.payback_months",
