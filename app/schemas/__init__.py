@@ -2,6 +2,18 @@
 
 from app.schemas.analysis import AnalysisRequest, AnalysisResponse
 from app.schemas.common import AppBaseModel
+from app.schemas.compare import (
+    DEFAULT_COMPARE_RANKING_RULES,
+    CompareCandidateRequest,
+    CompareCompetitorSummary,
+    CompareFailedCandidate,
+    CompareRankingRules,
+    CompareRankingSortKey,
+    CompareRequest,
+    CompareResponse,
+    CompareSuccessfulCandidate,
+    CompareSummary,
+)
 from app.schemas.competitor import (
     CompetitorInfo,
     CompetitorsSearchRequest,
@@ -36,7 +48,17 @@ __all__ = [
     "CompetitorsSearchRequest",
     "CompetitorsSearchResponse",
     "CompetitorsSummary",
+    "CompareCandidateRequest",
+    "CompareCompetitorSummary",
+    "CompareFailedCandidate",
+    "CompareRankingRules",
+    "CompareRankingSortKey",
+    "CompareRequest",
+    "CompareResponse",
+    "CompareSuccessfulCandidate",
+    "CompareSummary",
     "DataSourceInfo",
+    "DEFAULT_COMPARE_RANKING_RULES",
     "ErrorInfo",
     "ErrorResponse",
     "FinanceResult",

@@ -40,6 +40,14 @@ Expected coverage themes:
 - `business_type` is limited to `pvz`.
 - Marketplace statuses reject automatic `passed` / `failed` in MVP.
 
+V1.2-1 compare schema contract coverage:
+
+- Compare request accepts 2, 3, 4, and 5 candidates.
+- Compare request rejects 0, 1, and 6 candidates.
+- Compare response validates all-success, all-failed, and mixed outcomes.
+- Ranking metadata is present, deterministic, and has `uses_llm = false`.
+- Ordinary compare schema tests do not call real external providers.
+
 ### Integration tests
 
 Implemented MVP endpoints:
