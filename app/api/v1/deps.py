@@ -15,6 +15,7 @@ from app.providers.llm.fallback import FallbackReportProvider
 from app.providers.llm.openai_compatible import OpenAICompatibleReportProvider
 from app.providers.poi_search.base import PoiSearchProvider
 from app.services.analysis import AnalysisService
+from app.services.compare import CompareService
 from app.services.geocoding import GeocodingService
 from app.services.report import ReportService
 
@@ -103,3 +104,11 @@ def get_analysis_service(
         poi_providers=poi_providers,
         report_service=report_service,
     )
+
+
+def get_compare_service(
+    analysis_service: Annotated[AnalysisService, Depends(get_analysis_service)],
+) -> CompareService:
+    """Return the V1.2 compare service."""
+
+    return CompareService(analysis_service=analysis_service)

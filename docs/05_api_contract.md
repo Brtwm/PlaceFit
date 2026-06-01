@@ -173,12 +173,13 @@ http://localhost:8000/api/v1
 
 ## POST /api/v1/locations/compare — V1.2 contract
 
-Status: **contract defined for V1.2; backend endpoint is not implemented in
-V1.2-1**.
+Status: **implemented in V1.2-3 as a backend API endpoint**.
 
 `POST /api/v1/analyze` remains unchanged. Compare mode reuses the existing
 single-address `AnalysisRequest` shape for newly entered candidates. Saved
 analysis references are deferred until compare persistence is implemented.
+Compare session persistence is not part of V1.2-3, so `compare_id` is currently
+`null`.
 
 LLM output is not used for score, confidence, finance, decision, ranking, or
 candidate ordering. Ranking metadata must be deterministic and derived from
@@ -254,7 +255,7 @@ Compare responses can contain successful candidates, failed candidates, or both.
   "compare_id": null,
   "created_at": "2026-05-31T12:00:00Z",
   "ranking_rules": {
-    "version": "v1.2-1",
+    "version": "v1.2-2",
     "description": "Successful candidates are ranked deterministically from visible analysis fields. LLM output is not used for ranking.",
     "sort_keys": [
       {
@@ -274,6 +275,12 @@ Compare responses can contain successful candidates, failed candidates, or both.
         "direction": "asc",
         "nulls": "none",
         "description": "Decision severity order breaks remaining ties."
+      },
+      {
+        "field": "finance.net_profit",
+        "direction": "desc",
+        "nulls": "last",
+        "description": "Higher known net profit breaks remaining ties."
       },
       {
         "field": "finance.payback_months",
@@ -380,18 +387,25 @@ The initial deterministic ranking rule is:
 2. Tie-break by `score.confidence_score` descending.
 3. Tie-break by `score.decision` severity, best to worst:
    `можно рассматривать`, `проверить дополнительно`, `скорее не открывать`.
-4. Tie-break by `finance.payback_months` ascending, with missing values last.
-5. Final tie-break by original `input_index` ascending.
+4. Tie-break by `finance.net_profit` descending, with missing values last.
+5. Tie-break by `finance.payback_months` ascending, with missing values last.
+6. Final tie-break by original `input_index` ascending.
 
 `ranking_rules.uses_llm` must always be `false`. If `trade_offs` text is
 included, it must be derived only from fields visible in the compare response.
 
 ### Error policy
 
-- Invalid request shape, including fewer than 2 or more than 5 candidates, is a
-  request-level validation error.
+- Invalid request shape, including fewer than 2 or more than 5 candidates,
+  unsupported saved-analysis reference shapes, and unsupported nested
+  `business_type` values, returns HTTP 422.
 - Candidate analysis failures should be represented in `failed_candidates` when
   compare can continue for other candidates.
+- Partial failures return HTTP 200 with successful candidates in
+  `ranked_candidates` and candidate-level errors in `failed_candidates`.
+- If all candidate analyses fail but compare can represent those failures, the
+  endpoint returns HTTP 200 with an empty `ranked_candidates` list and populated
+  `failed_candidates`.
 - Request-level errors should be used only when compare cannot run at all.
 - Ambiguous geocoding should expose candidate-level `error.suggestions` using
   the existing geocoding suggestion shape.
@@ -513,7 +527,6 @@ a future reporting iteration if there is a product need.
 
 | Endpoint | Версия | Назначение |
 |----------|--------|-----------|
-| POST /api/v1/locations/compare | V1.2 | Сравнение 2–5 адресов |
 | POST /api/v1/exports | V1.3 | Markdown/PDF/Excel export |
 | POST /api/v1/locations/{id}/reanalyze | V1.4 | Manual refresh saved location |
 | GET /api/v1/locations/{id}/deltas | V1.4 | Delta between saved analyses |

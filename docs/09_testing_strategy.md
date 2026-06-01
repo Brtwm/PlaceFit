@@ -59,6 +59,7 @@ GET  /api/v1/locations
 GET  /api/v1/locations/{id}
 POST /api/v1/geocode
 POST /api/v1/competitors/search
+POST /api/v1/locations/compare
 ```
 
 Important scenarios:
@@ -70,6 +71,9 @@ Important scenarios:
 - Non-Krasnodar address is rejected.
 - LLM disabled or unavailable returns HTTP 200 with `report.status = "fallback"`.
 - Top-level `LLM_FAILED` is allowed only if no report can be created.
+- Compare endpoint accepts 2-5 candidates, rejects invalid counts with HTTP 422,
+  returns candidate-level failures with HTTP 200 when compare can represent
+  them, and exposes deterministic ranking metadata with `uses_llm = false`.
 - Ordinary integration tests do not make network calls.
 
 ### Mock and external provider strategy
