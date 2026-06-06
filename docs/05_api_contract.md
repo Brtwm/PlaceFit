@@ -399,6 +399,15 @@ included, it must be derived only from fields visible in the compare response.
 Stored compare snapshots preserve this historical ranking context and must not
 be rebuilt from current provider, scoring, finance, report, or ranking logic.
 
+### V1.2-6 Markdown export
+
+V1.2-6 compare summary export is generated as Markdown locally in the UI/export
+helper from an existing `CompareResponse` snapshot. It does not rerun
+geocoding, POI search, scoring, finance, report generation, or ranking.
+
+No broad `POST /api/v1/exports` endpoint is implemented in V1.2-6. Broader
+reporting/export polish, including CSV/PDF/Excel, remains future V1.3 work.
+
 ### Error policy
 
 - Invalid request shape, including fewer than 2 or more than 5 candidates,
@@ -556,7 +565,7 @@ a future reporting iteration if there is a product need.
 
 | Endpoint | Версия | Назначение |
 |----------|--------|-----------|
-| POST /api/v1/exports | V1.3 | Markdown/PDF/Excel export |
+| POST /api/v1/exports | V1.3 | Broader reporting/export polish beyond the V1.2-6 local compare Markdown helper |
 | POST /api/v1/locations/{id}/reanalyze | V1.4 | Manual refresh saved location |
 | GET /api/v1/locations/{id}/deltas | V1.4 | Delta between saved analyses |
 | GET /api/v1/scoring-versions/compare | V1.5 | Scoring rule version comparison |

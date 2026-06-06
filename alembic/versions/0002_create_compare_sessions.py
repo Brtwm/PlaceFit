@@ -5,8 +5,6 @@ Revises: 0001_create_mvp_schema
 Create Date: 2026-06-01
 """
 
-from typing import Any
-
 import sqlalchemy as sa
 from alembic import op
 from sqlalchemy.dialects import postgresql

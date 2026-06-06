@@ -59,6 +59,16 @@ V1.2-4 compare persistence coverage:
   without rerunning analysis, providers, scoring, finance, report generation, or
   ranking.
 
+V1.2-6 compare Markdown export coverage:
+
+- Markdown export contains all successful and failed candidates, ranking rules,
+  warnings, assumptions, limitation notes, and the profit disclaimer.
+- Failed candidates export with `status = failed` and error fields.
+- Export order matches compare ranking for successful candidates, followed by
+  failed candidates in saved response order.
+- Export tests are pure unit tests over `CompareResponse` snapshots and make no
+  network, provider, DB, HTTP, analysis, or LLM calls.
+
 ### Integration tests
 
 Implemented MVP endpoints:

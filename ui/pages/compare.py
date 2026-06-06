@@ -5,6 +5,9 @@ from __future__ import annotations
 from typing import Any
 
 import streamlit as st
+from app.schemas.compare import CompareResponse
+from app.services.compare_export import export_compare_markdown
+from pydantic import ValidationError
 
 from ui.api_client import ApiClient, ApiError
 from ui.components.layout import render_page_header, setup_page
@@ -55,7 +58,8 @@ def main() -> None:
     )
     st.info(
         "Текущий UI сравнивает только новые введённые адреса. "
-        "Выбор сохранённых анализов и экспорт не реализованы в этой фазе.",
+        "Выбор сохранённых анализов не реализован в этой фазе. "
+        "Markdown экспорт доступен после успешного сравнения.",
     )
 
     payload = _render_form()
@@ -284,6 +288,7 @@ def _validate_payload(payload: dict[str, Any]) -> list[str]:
 
 def _render_compare_result(result: dict[str, Any]) -> None:
     _render_summary(result)
+    _render_export_buttons(result)
 
     ranked = result.get("ranked_candidates") or []
     failed = result.get("failed_candidates") or []
@@ -327,6 +332,24 @@ def _render_summary(result: dict[str, Any]) -> None:
     cols[2].metric("Ошибки", _value(summary.get("failed_count")))
     cols[3].metric("Compare ID", _value(result.get("compare_id")))
     st.caption(f"Создано: {_value(result.get('created_at'))}")
+
+
+def _render_export_buttons(result: dict[str, Any]) -> None:
+    try:
+        response = CompareResponse.model_validate(result)
+    except ValidationError:
+        st.error(
+            "Не удалось подготовить экспорт: результат сравнения имеет "
+            "неожиданный формат.",
+        )
+        return
+
+    st.download_button(
+        "Скачать Markdown",
+        data=export_compare_markdown(response),
+        file_name="placefit_compare_summary.md",
+        mime="text/markdown",
+    )
 
 
 def _ranked_row(candidate: dict[str, Any]) -> dict[str, Any]:
