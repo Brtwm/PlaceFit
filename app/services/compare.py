@@ -3,7 +3,10 @@
 from dataclasses import dataclass
 from datetime import UTC, datetime
 
+from sqlalchemy.orm import Session
+
 from app.config.scoring_rules import DECISION_RULES
+from app.models import CompareSession
 from app.schemas.analysis import AnalysisResponse
 from app.schemas.compare import (
     DEFAULT_COMPARE_RANKING_RULES,
@@ -14,7 +17,7 @@ from app.schemas.compare import (
     CompareSuccessfulCandidate,
     CompareSummary,
 )
-from app.schemas.error import ErrorInfo
+from app.schemas.error import ErrorCode, ErrorInfo
 from app.schemas.report import MarketplaceRequirements
 from app.services.analysis import (
     AnalysisService,
@@ -42,11 +45,33 @@ class _SuccessfulCandidateDraft:
     analysis: AnalysisResponse
 
 
+class CompareServiceError(Exception):
+    """Domain error raised by the compare service."""
+
+    def __init__(
+        self,
+        code: ErrorCode,
+        message: str,
+        *,
+        details: str | None = None,
+    ) -> None:
+        super().__init__(message)
+        self.code = code
+        self.message = message
+        self.details = details
+
+
 class CompareService:
     """Compare newly submitted candidates through the analysis pipeline."""
 
-    def __init__(self, analysis_service: AnalysisService) -> None:
+    def __init__(
+        self,
+        analysis_service: AnalysisService,
+        *,
+        db: Session | None = None,
+    ) -> None:
         self._analysis_service = analysis_service
+        self._db = db
 
     def compare(self, request: CompareRequest) -> CompareResponse:
         """Analyze, rank, and return visible per-candidate outcomes."""
@@ -90,7 +115,7 @@ class CompareService:
             )
         ]
 
-        return CompareResponse(
+        response = CompareResponse(
             compare_id=None,
             created_at=datetime.now(UTC),
             ranking_rules=DEFAULT_COMPARE_RANKING_RULES,
@@ -102,6 +127,44 @@ class CompareService:
                 failed_count=len(failed),
             ),
         )
+        return self._save_compare_session(request, response)
+
+    def get_saved_compare_session(self, compare_id: int) -> CompareResponse:
+        """Return the original saved compare response snapshot."""
+
+        if self._db is None:
+            raise CompareServiceError("NOT_FOUND", "Сессия сравнения не найдена")
+
+        session = self._db.get(CompareSession, compare_id)
+        if session is None:
+            raise CompareServiceError("NOT_FOUND", "Сессия сравнения не найдена")
+
+        return CompareResponse.model_validate(session.response_snapshot)
+
+    def _save_compare_session(
+        self,
+        request: CompareRequest,
+        response: CompareResponse,
+    ) -> CompareResponse:
+        if self._db is None:
+            return response
+
+        session = CompareSession(
+            ranking_rules_version=response.ranking_rules.version,
+            request_snapshot=request.model_dump(mode="json"),
+            response_snapshot=response.model_dump(mode="json"),
+        )
+        try:
+            self._db.add(session)
+            self._db.flush()
+            response.compare_id = session.id
+            session.response_snapshot = response.model_dump(mode="json")
+            self._db.commit()
+        except Exception:
+            self._db.rollback()
+            raise
+
+        return response
 
 
 def _candidate_id(input_index: int) -> str:

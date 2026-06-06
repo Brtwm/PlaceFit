@@ -175,6 +175,32 @@ CREATE TABLE scoring_versions (
 );
 ```
 
+### compare_sessions
+
+Saved V1.2 compare runs. This table is snapshot-first: it stores the full
+public compare request and response so a historical compare session can be
+loaded without rerunning geocoding, POI search, scoring, finance, report
+generation, or ranking.
+
+```sql
+CREATE TABLE compare_sessions (
+    id SERIAL PRIMARY KEY,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+    ranking_rules_version TEXT NOT NULL,
+    request_snapshot JSONB NOT NULL,
+    response_snapshot JSONB NOT NULL,
+    notes TEXT
+);
+
+CREATE INDEX idx_compare_sessions_created_at ON compare_sessions(created_at);
+```
+
+`response_snapshot` preserves ranked successful candidates, failed candidate
+errors, scoring version values from each candidate analysis, ranking metadata,
+and `source_analysis_id` / `location_summary.id` references when available.
+Saved compare sessions must be displayed from this snapshot and must not be
+rebuilt from mutable current provider data or current ranking logic.
+
 ### marketplace_requirements
 Требования маркетплейсов (справочник). В MVP такие требования не используются
 как автоматическое подтверждение соответствия. Продуктовый ответ остаётся

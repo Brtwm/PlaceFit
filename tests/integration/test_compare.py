@@ -2,31 +2,39 @@ from copy import deepcopy
 from typing import Any
 
 from app.api.v1.deps import get_geocoding_service
+from app.models import CompareSession
 from app.providers.geocoder.fake import FakeGeocoder
 from app.services.geocoding import GeocodingService
 from fastapi.testclient import TestClient
+from sqlalchemy import select
+from sqlalchemy.orm import Session
 
 
-def test_compare_accepts_two_valid_candidates(client: TestClient) -> None:
+def test_compare_accepts_two_valid_candidates(
+    client: TestClient,
+    db_session: Session,
+) -> None:
+    request_payload = _compare_request(
+        _analysis_request(
+            address="Краснодар, ул. Восточно-Кругликовская, 30",
+            rent=70_000,
+        ),
+        _analysis_request(
+            address="Краснодар, ул. Красная, 1",
+            rent=150_000,
+            high_density_area=False,
+            new_residential_area=False,
+            expected_gross_income_by_user=100_000,
+        ),
+    )
     response = client.post(
         "/api/v1/locations/compare",
-        json=_compare_request(
-            _analysis_request(
-                address="Краснодар, ул. Восточно-Кругликовская, 30",
-                rent=70_000,
-            ),
-            _analysis_request(
-                address="Краснодар, ул. Красная, 1",
-                rent=150_000,
-                high_density_area=False,
-                new_residential_area=False,
-                expected_gross_income_by_user=100_000,
-            ),
-        ),
+        json=request_payload,
     )
 
     assert response.status_code == 200
     payload = response.json()
+    assert payload["compare_id"] is not None
     assert payload["summary"]["requested_count"] == 2
     assert payload["summary"]["successful_count"] == 2
     assert payload["summary"]["failed_count"] == 0
@@ -60,6 +68,22 @@ def test_compare_accepts_two_valid_candidates(client: TestClient) -> None:
         for candidate in payload["ranked_candidates"]
     ]
     assert scores == sorted(scores, reverse=True)
+
+    session = db_session.scalar(select(CompareSession))
+    assert session is not None
+    assert session.id == payload["compare_id"]
+    assert session.ranking_rules_version == ranking_rules["version"]
+    assert session.request_snapshot["candidates"] == request_payload["candidates"]
+    assert session.response_snapshot["compare_id"] == payload["compare_id"]
+    assert len(session.response_snapshot["ranked_candidates"]) == 2
+    assert all(
+        candidate["source_analysis_id"] == candidate["location_summary"]["id"]
+        for candidate in session.response_snapshot["ranked_candidates"]
+    )
+
+    saved_response = client.get(f"/api/v1/locations/compare/{payload['compare_id']}")
+    assert saved_response.status_code == 200
+    assert saved_response.json() == payload
 
 
 def test_compare_rejects_one_candidate(client: TestClient) -> None:
@@ -114,7 +138,10 @@ def test_compare_rejects_unsupported_business_type(client: TestClient) -> None:
     assert response.status_code == 422
 
 
-def test_compare_returns_candidate_level_failure(client: TestClient) -> None:
+def test_compare_returns_candidate_level_failure(
+    client: TestClient,
+    db_session: Session,
+) -> None:
     response = client.post(
         "/api/v1/locations/compare",
         json=_compare_request(
@@ -132,10 +159,17 @@ def test_compare_returns_candidate_level_failure(client: TestClient) -> None:
     assert payload["failed_candidates"][0]["status"] == "failed"
     assert payload["failed_candidates"][0]["input_index"] == 1
     assert payload["failed_candidates"][0]["error"]["code"] == "GEOCODING_FAILED"
+    assert payload["compare_id"] is not None
+
+    session = db_session.get(CompareSession, payload["compare_id"])
+    assert session is not None
+    failed = session.response_snapshot["failed_candidates"][0]
+    assert failed["error"]["code"] == "GEOCODING_FAILED"
 
 
 def test_compare_preserves_ambiguous_candidate_suggestions(
     client: TestClient,
+    db_session: Session,
 ) -> None:
     _override_geocoder(
         client,
@@ -193,6 +227,21 @@ def test_compare_preserves_ambiguous_candidate_suggestions(
         "г Краснодар, ул Восточно-Кругликовская, д 30"
     )
     assert failed["error"]["suggestions"][0]["confidence"] == 0.82
+
+    compare_id = response.json()["compare_id"]
+    assert compare_id is not None
+    session = db_session.get(CompareSession, compare_id)
+    assert session is not None
+    saved_failed = session.response_snapshot["failed_candidates"][0]
+    assert saved_failed["error"]["code"] == "ADDRESS_AMBIGUOUS"
+    assert saved_failed["error"]["suggestions"][0]["confidence"] == 0.82
+
+
+def test_compare_session_not_found_returns_404(client: TestClient) -> None:
+    response = client.get("/api/v1/locations/compare/999999")
+
+    assert response.status_code == 404
+    assert response.json()["error"]["code"] == "NOT_FOUND"
 
 
 def test_compare_router_does_not_break_analyze(client: TestClient) -> None:

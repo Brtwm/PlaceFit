@@ -107,8 +107,9 @@ def get_analysis_service(
 
 
 def get_compare_service(
+    db: Annotated[Session, Depends(get_db_session)],
     analysis_service: Annotated[AnalysisService, Depends(get_analysis_service)],
 ) -> CompareService:
     """Return the V1.2 compare service."""
 
-    return CompareService(analysis_service=analysis_service)
+    return CompareService(analysis_service=analysis_service, db=db)

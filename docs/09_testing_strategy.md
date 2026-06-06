@@ -48,6 +48,17 @@ V1.2-1 compare schema contract coverage:
 - Ranking metadata is present, deterministic, and has `uses_llm = false`.
 - Ordinary compare schema tests do not call real external providers.
 
+V1.2-4 compare persistence coverage:
+
+- Compare session migration creates `compare_sessions`.
+- Compare ORM model is imported into SQLAlchemy metadata.
+- Successful compare runs persist request and response snapshots.
+- Returned `compare_id` matches the saved `compare_sessions.id`.
+- Failed candidate errors and suggestions are preserved in the stored snapshot.
+- Loading a saved compare session returns the original public response snapshot
+  without rerunning analysis, providers, scoring, finance, report generation, or
+  ranking.
+
 ### Integration tests
 
 Implemented MVP endpoints:
@@ -74,6 +85,9 @@ Important scenarios:
 - Compare endpoint accepts 2-5 candidates, rejects invalid counts with HTTP 422,
   returns candidate-level failures with HTTP 200 when compare can represent
   them, and exposes deterministic ranking metadata with `uses_llm = false`.
+- Compare endpoint persists saved sessions with full request/response snapshots,
+  and `GET /api/v1/locations/compare/{compare_id}` returns the stored snapshot
+  without real provider calls or recalculation.
 - Ordinary integration tests do not make network calls.
 
 ### Mock and external provider strategy

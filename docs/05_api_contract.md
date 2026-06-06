@@ -177,9 +177,11 @@ Status: **implemented in V1.2-3 as a backend API endpoint**.
 
 `POST /api/v1/analyze` remains unchanged. Compare mode reuses the existing
 single-address `AnalysisRequest` shape for newly entered candidates. Saved
-analysis references are deferred until compare persistence is implemented.
-Compare session persistence is not part of V1.2-3, so `compare_id` is currently
-`null`.
+analysis references as compare inputs remain deferred. V1.2-4 adds DB-backed
+compare session persistence: successful API compare runs return a populated
+`compare_id` and store full request/response snapshots. The schema keeps
+`compare_id` nullable for backward compatibility and service-level use without a
+DB session.
 
 LLM output is not used for score, confidence, finance, decision, ranking, or
 candidate ordering. Ranking metadata must be deterministic and derived from
@@ -248,11 +250,12 @@ field shape as `POST /api/v1/analyze`.
 ### Response (200)
 
 Compare responses can contain successful candidates, failed candidates, or both.
-`compare_id` is nullable until saved compare sessions are implemented.
+When the API saves the compare session successfully, `compare_id` contains the
+saved `compare_sessions.id`.
 
 ```json
 {
-  "compare_id": null,
+  "compare_id": 1,
   "created_at": "2026-05-31T12:00:00Z",
   "ranking_rules": {
     "version": "v1.2-2",
@@ -393,6 +396,8 @@ The initial deterministic ranking rule is:
 
 `ranking_rules.uses_llm` must always be `false`. If `trade_offs` text is
 included, it must be derived only from fields visible in the compare response.
+Stored compare snapshots preserve this historical ranking context and must not
+be rebuilt from current provider, scoring, finance, report, or ranking logic.
 
 ### Error policy
 
@@ -409,6 +414,30 @@ included, it must be derived only from fields visible in the compare response.
 - Request-level errors should be used only when compare cannot run at all.
 - Ambiguous geocoding should expose candidate-level `error.suggestions` using
   the existing geocoding suggestion shape.
+
+---
+
+## GET /api/v1/locations/compare/{compare_id} — V1.2 saved session
+
+Returns the saved public compare response snapshot for a previously persisted
+compare run. Loading a saved compare session does not rerun geocoding, POI
+search, scoring, finance, report generation, or ranking.
+
+### Response (200)
+
+The response shape is the same as `POST /api/v1/locations/compare` and is loaded
+from `compare_sessions.response_snapshot`.
+
+### Response when not found (404)
+
+```json
+{
+  "error": {
+    "code": "NOT_FOUND",
+    "message": "Сессия сравнения не найдена"
+  }
+}
+```
 
 ---
 

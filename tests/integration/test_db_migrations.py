@@ -6,6 +6,7 @@ import sqlalchemy as sa
 from alembic import command
 from alembic.config import Config
 from app.config.settings import get_settings
+from app.db.base import Base
 from sqlalchemy import Engine, inspect, text
 from sqlalchemy.engine import make_url
 from sqlalchemy.exc import OperationalError, ProgrammingError
@@ -19,6 +20,7 @@ MVP_TABLES = {
     "financial_models",
     "reports",
     "marketplace_requirements",
+    "compare_sessions",
 }
 
 
@@ -39,6 +41,12 @@ def test_migration_creates_mvp_tables(migrated_engine: Engine) -> None:
     inspector = inspect(migrated_engine)
 
     assert MVP_TABLES.issubset(set(inspector.get_table_names()))
+
+
+def test_compare_session_model_is_registered_in_metadata() -> None:
+    import app.models  # noqa: F401
+
+    assert "compare_sessions" in Base.metadata.tables
 
 
 def test_migration_creates_postgis_extension(migrated_engine: Engine) -> None:
@@ -126,6 +134,7 @@ def _reset_public_schema(db_url: str) -> None:
                     """
                     DROP TABLE IF EXISTS
                         alembic_version,
+                        compare_sessions,
                         marketplace_requirements,
                         reports,
                         financial_models,
