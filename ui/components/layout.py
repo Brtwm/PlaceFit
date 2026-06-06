@@ -30,13 +30,16 @@ def render_sidebar() -> str:
         """
         <div class="pf-sidebar-brand">
           <div class="pf-sidebar-title">PlaceFit</div>
-          <div class="pf-sidebar-subtitle">MVP: Краснодар, ПВЗ, один адрес</div>
+          <div class="pf-sidebar-subtitle">
+            MVP: Краснодар, ПВЗ, анализ и сравнение
+          </div>
         </div>
         """,
         unsafe_allow_html=True,
     )
     st.sidebar.page_link("streamlit_app.py", label="Главная", icon="🏠")
     st.sidebar.page_link("pages/analyze.py", label="Анализ адреса", icon="📍")
+    st.sidebar.page_link("pages/compare.py", label="Сравнение", icon="⚖️")
     st.sidebar.page_link("pages/history.py", label="История", icon="🗂️")
     st.sidebar.page_link("pages/detail.py", label="Детали", icon="🔎")
     st.sidebar.divider()

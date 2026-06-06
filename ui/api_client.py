@@ -38,6 +38,17 @@ class ApiClient:
     def analyze(self, payload: dict[str, Any]) -> dict[str, Any] | ApiError:
         return self._request("POST", "/analyze", json=payload, timeout=60.0)
 
+    def compare_locations(
+        self,
+        payload: dict[str, Any],
+    ) -> dict[str, Any] | ApiError:
+        return self._request(
+            "POST",
+            "/locations/compare",
+            json=payload,
+            timeout=120.0,
+        )
+
     def list_locations(self, params: dict[str, Any]) -> dict[str, Any] | ApiError:
         clean_params = {
             key: value for key, value in params.items() if value is not None
@@ -46,6 +57,9 @@ class ApiClient:
 
     def get_location(self, location_id: int) -> dict[str, Any] | ApiError:
         return self._request("GET", f"/locations/{location_id}", timeout=20.0)
+
+    def get_compare_session(self, compare_id: int) -> dict[str, Any] | ApiError:
+        return self._request("GET", f"/locations/compare/{compare_id}", timeout=20.0)
 
     def _request(
         self,
