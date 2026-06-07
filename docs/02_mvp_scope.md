@@ -64,8 +64,9 @@ for a PVZ / ПВЗ location in 1-3 minutes.
 | Capability | Version | Notes |
 |---|---|---|
 | Manual validation dataset and demo cases | V1.1 | First post-MVP step |
-| Compare mode for 2-5 addresses | V1.2 | Before monitoring/admin work |
-| Markdown/PDF/Excel export | V1.3 | Reporting polish only |
+| Compare mode for 2-5 newly entered candidate locations | V1.2 | Implemented locally |
+| Markdown compare export | V1.2 | Implemented from compare response snapshots |
+| CSV/PDF/Excel export | V1.3 | Deferred reporting polish only |
 | Saved location refresh and deltas | V1.4 | Manual refresh, no crawler |
 | Scoring rule comparison and governance | V1.5 | Preserve historical versions |
 | Marketplace rules with source tracking | V1.5 | Manual-check/versioned rules |

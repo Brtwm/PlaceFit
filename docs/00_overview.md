@@ -3,12 +3,13 @@
 ## Что это
 
 **PlaceFit** — геоаналитическая система поддержки решений для оценки одной
-коммерческой локации под ПВЗ. MVP / V1.0 сфокусирован на анализе конкретного
-адреса в Краснодаре.
+коммерческой локации под ПВЗ и сравнения 2-5 кандидатных локаций. MVP / V1.0
+сфокусирован на анализе конкретного адреса в Краснодаре.
 
-Текущий статус: **local demo ready**. Backend, PostgreSQL/PostGIS, deterministic
-services, fake/fallback providers, optional real providers, AI/fallback report,
-Streamlit UI, карта, чек-лист и история анализов уже реализованы.
+Текущий статус: **V1.2 compare mode implemented locally and release-hardened**.
+Backend, PostgreSQL/PostGIS, deterministic services, fake/fallback providers,
+optional real providers, AI/fallback report, Streamlit UI, карта, чек-лист,
+история анализов, compare mode и Markdown compare export уже реализованы.
 
 ## Целевой пользователь
 
@@ -52,8 +53,10 @@ shell, external APIs или секретам.
 ## Краткий roadmap
 
 - **V1.1**: stabilization, manual validation, docs hardening.
-- **V1.2**: compare mode for 2-5 addresses.
-- **V1.3**: Markdown/PDF/Excel export and report polish.
+- **V1.2**: compare mode for 2-5 newly entered candidate locations and
+  Markdown compare export.
+- **V1.3**: broader export/report polish, including CSV/PDF/Excel if still
+  needed.
 - **V1.4**: manual refresh and delta view for saved locations.
 - **V1.5**: scoring governance and source-tracked marketplace rule maturity.
 - **V2**: city-wide location intelligence for PVZ only.

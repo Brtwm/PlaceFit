@@ -173,15 +173,14 @@ http://localhost:8000/api/v1
 
 ## POST /api/v1/locations/compare — V1.2 contract
 
-Status: **implemented in V1.2-3 as a backend API endpoint**.
+Status: **implemented in V1.2**.
 
 `POST /api/v1/analyze` remains unchanged. Compare mode reuses the existing
 single-address `AnalysisRequest` shape for newly entered candidates. Saved
-analysis references as compare inputs remain deferred. V1.2-4 adds DB-backed
-compare session persistence: successful API compare runs return a populated
-`compare_id` and store full request/response snapshots. The schema keeps
-`compare_id` nullable for backward compatibility and service-level use without a
-DB session.
+analysis references as compare inputs remain deferred. DB-backed compare
+session persistence stores full request/response snapshots: successful API
+compare runs return a populated `compare_id`. The schema keeps `compare_id`
+nullable for backward compatibility and service-level use without a DB session.
 
 LLM output is not used for score, confidence, finance, decision, ranking, or
 candidate ordering. Ranking metadata must be deterministic and derived from
@@ -399,14 +398,15 @@ included, it must be derived only from fields visible in the compare response.
 Stored compare snapshots preserve this historical ranking context and must not
 be rebuilt from current provider, scoring, finance, report, or ranking logic.
 
-### V1.2-6 Markdown export
+### V1.2 Markdown export
 
-V1.2-6 compare summary export is generated as Markdown locally in the UI/export
-helper from an existing `CompareResponse` snapshot. It does not rerun
-geocoding, POI search, scoring, finance, report generation, or ranking.
+V1.2 compare summary export is generated as Markdown locally in the UI/export
+helper from an existing `CompareResponse` snapshot. It does not rerun geocoding,
+POI search, scoring, finance, report generation, or ranking.
 
-No broad `POST /api/v1/exports` endpoint is implemented in V1.2-6. Broader
-reporting/export polish, including CSV/PDF/Excel, remains future V1.3 work.
+No broad `POST /api/v1/exports` endpoint is implemented in V1.2. CSV, PDF, and
+Excel export are not implemented in V1.2; broader reporting/export polish
+remains future V1.3 work.
 
 ### Error policy
 
@@ -565,7 +565,7 @@ a future reporting iteration if there is a product need.
 
 | Endpoint | Версия | Назначение |
 |----------|--------|-----------|
-| POST /api/v1/exports | V1.3 | Broader reporting/export polish beyond the V1.2-6 local compare Markdown helper |
+| POST /api/v1/exports | V1.3 | Broader reporting/export polish beyond the V1.2 local compare Markdown helper |
 | POST /api/v1/locations/{id}/reanalyze | V1.4 | Manual refresh saved location |
 | GET /api/v1/locations/{id}/deltas | V1.4 | Delta between saved analyses |
 | GET /api/v1/scoring-versions/compare | V1.5 | Scoring rule version comparison |

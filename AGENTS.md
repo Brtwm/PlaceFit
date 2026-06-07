@@ -3,17 +3,20 @@
 ## Project Summary
 
 **PlaceFit** is a geoanalytics decision-support system for evaluating one
-commercial location for a PVZ / ПВЗ pickup point.
+commercial location for a PVZ / ПВЗ pickup point and comparing 2-5 candidate
+PVZ locations.
 
-Current status: **V1.1 stabilization complete**. The implemented demo path uses
+Current status: **V1.2 compare mode implemented locally and release-hardened
+with ordinary automated checks passing**. The implemented demo path uses
 FastAPI, deterministic backend services, PostgreSQL/PostGIS, fake/fallback
 providers, optional real providers, optional LLM with fallback report, Streamlit
-UI, map, checklist, Docker Compose, and saved analysis history.
+UI, map, checklist, Docker Compose, saved analysis history, saved compare
+sessions, and Markdown compare export.
 
 Core principle: **AI explains, deterministic code decides.**
 
-LLM must never calculate score, finance, confidence, or decision. It receives
-prepared JSON and generates explanatory text only.
+LLM must never calculate score, finance, confidence, decision, or compare
+ranking. It receives prepared JSON and generates explanatory text only.
 
 ## Repo Layout
 
@@ -30,6 +33,10 @@ docs/13_*               historical MVP coding plan
 
 `memory-bank/` may exist locally as working memory, but it is not public source
 of truth.
+
+Root `roadmap.md` was local-only implementation planning and is obsolete after
+V1.2 completion. Do not reintroduce it. Public roadmap work belongs in
+`docs/10_roadmap.md`.
 
 ## Start Here
 
@@ -126,7 +133,7 @@ They require explicit environment variables and must not run in ordinary tests.
 - LLM receives only prepared analysis JSON.
 - LLM has no DB, shell, external API, or secret access.
 - LLM must not create facts, competitors, revenue forecasts, score,
-  confidence, finance, or decision.
+  confidence, finance, decision, or compare ranking.
 - If LLM is disabled, missing a key, or unavailable, fallback report returns a
   successful response with `report.status = "fallback"`.
 - Top-level `LLM_FAILED` is allowed only if no report can be created at all.
@@ -136,6 +143,13 @@ They require explicit environment variables and must not run in ordinary tests.
 - MVP / V1.0 supports only Krasnodar.
 - MVP / V1.0 supports only `business_type = "pvz"`.
 - MVP / V1.0 analyzes one address at a time.
+- V1.2 compare supports 2-5 newly entered candidate locations.
+- Compare ranking is deterministic from visible fields only.
+- LLM must not rank candidates.
+- Saved compare sessions are loaded from stored response snapshots and must not
+  rerun providers, analysis, scoring, finance, report generation, or ranking.
+- Current V1.2 compare export is Markdown-only from an existing
+  `CompareResponse` snapshot.
 - PlaceFit does not guarantee profit.
 - `expected_gross_income_by_user` is a user hypothesis, not a forecast.
 - Marketplace checks require manual verification from official sources.
@@ -148,7 +162,7 @@ Use `docs/10_roadmap.md` as the active future plan:
 
 1. V1.1 stabilization complete; deferred 30-50 case manual benchmark remains
    future evidence work.
-2. V1.2 compare mode.
+2. V1.2 compare mode implemented and release-hardened.
 3. V1.3 export/reporting polish.
 4. V1.4 manual refresh and deltas for saved locations.
 5. V1.5 scoring governance and marketplace rule maturity.
@@ -167,9 +181,12 @@ wrapper over a mature product if a real customer explicitly requests it.
 - Do not add ML before a dataset/backtesting plan exists.
 - Do not add new business types before PVZ validation is complete.
 - Do not make LLM part of decision logic.
+- Do not make LLM part of compare ranking.
 - Do not call real external APIs in ordinary tests.
 - Do not commit secrets or real API keys.
 - Do not present marketplace checks as official compliance guarantees.
+- Do not claim unsupported exports or compare persistence behavior in public
+  docs.
 - Do not implement browser-agent or unsupported scraping.
 - Do not add H3/city-wide code before V2 work is explicitly requested.
 - Do not add auth/multi-user before V3 or a concrete product need.

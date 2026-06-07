@@ -155,8 +155,9 @@ LLM: OpenAI-compatible provider when enabled → template fallback
 | Точка | Версия | Как расширять |
 |-------|--------|--------------|
 | Manual validation | V1.1 | Validation cases and known limitations |
-| Compare mode | V1.2 | Compare API/UI over deterministic per-address analyses |
-| Export/reporting | V1.3 | Markdown/PDF/Excel from existing analysis JSON |
+| Compare mode | V1.2 | Implemented compare API/UI over deterministic per-address analyses |
+| Markdown compare export | V1.2 | Implemented from existing compare response snapshots |
+| Export/reporting | V1.3 | CSV/PDF/Excel polish from existing response snapshots if still needed |
 | Saved location refresh | V1.4 | Re-run analysis and show deltas |
 | Scoring governance | V1.5 | Version comparison and auditable rule changes |
 | Marketplace maturity | V1.5 | Source-tracked manual-check rules |

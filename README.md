@@ -1,28 +1,43 @@
 # PlaceFit - PVZ Location Analysis
 
-PlaceFit is a production-oriented local-demo MVP for evaluating one address in
-Krasnodar as a pickup point (`pvz`) location. The backend deterministically
-calculates competitors, score, confidence, finance, and decision; an LLM, when
-enabled, only explains prepared analysis JSON.
+PlaceFit is a production-oriented local-demo decision-support tool for
+evaluating one Krasnodar PVZ address and comparing 2-5 candidate PVZ locations.
+The backend deterministically calculates competitors, score, confidence,
+finance, decision, and compare ranking; an LLM, when enabled, only explains
+prepared analysis JSON.
 
-Status: **V1.1 stabilization complete**. The normal demo path works without
+Status: **V1.2 compare mode implemented locally; release hardening completed
+with ordinary automated checks passing.** The normal demo path works without
 external API keys and without an LLM key by using fake geodata providers and a
 fallback report.
 
-V1.1 is accepted as complete based on stabilization work, documentation
-hardening, report/map review, and fresh-clone demo checks. The 30-50 case manual
-benchmark remains deferred and should not be described as completed validation
-evidence.
+The 30-50 case manual benchmark remains deferred and should not be described as
+completed validation evidence.
 
-## MVP Scope
+## Scope
+
+MVP / V1.0:
 
 - One city: Krasnodar.
 - One business type: `pvz`.
 - One address per analysis.
-- Result: score, confidence, finance, decision, report, checklist, map, history.
+- Deterministic scoring, confidence, finance, and decision.
+- Competitor search and 300/500/700 m radius buckets.
+- Report, checklist, map, saved analysis history, and detail view.
 - Stack: FastAPI backend, PostgreSQL/PostGIS, Streamlit UI, Docker Compose.
 - Default demo path: no `DGIS_API_KEY`, no `LLM_API_KEY`, no real provider keys.
 - Principle: **AI explains, deterministic code decides**.
+
+V1.2 additions:
+
+- Compare 2-5 newly entered candidate locations.
+- Each candidate reuses the existing single-address analysis pipeline.
+- Deterministic ranking from visible response fields only.
+- Candidate-level failures remain visible in compare results.
+- Saved compare sessions are loaded from stored response snapshots.
+- Streamlit compare page with ranked table, failed candidates, and map.
+- Markdown export from an existing compare response snapshot.
+- CSV, Excel, and PDF export are deferred reporting/export polish.
 
 ## Non-Goals
 
@@ -134,20 +149,31 @@ curl -X POST http://localhost:8000/api/v1/analyze \
   -d '{"address":"Краснодар, ул. Восточно-Кругликовская, 30","business_type":"pvz","rent":85000,"area_m2":35,"floor":1,"first_floor":true,"separate_entrance":true,"parking":true,"signage_possible":true,"storage_area":true,"repair_condition":"normal","new_residential_area":true,"high_density_area":true,"bus_stop_nearby":true,"good_visibility":true,"expected_gross_income_by_user":360000,"investment":600000,"desired_profit":80000}'
 ```
 
-## Verification Commands
+## Compare API Example
 
-Inside the running Compose stack:
+Compare two newly entered Krasnodar PVZ candidates:
 
-```bash
-docker compose exec backend pytest -v --tb=short
-docker compose exec backend ruff check .
-docker compose exec backend mypy app
-docker compose exec backend alembic upgrade head
+```powershell
+curl -X POST http://localhost:8000/api/v1/locations/compare `
+  -H "Content-Type: application/json" `
+  -d "{\"candidates\":[{\"label\":\"Вариант A\",\"analysis_request\":{\"address\":\"Краснодар, ул. Восточно-Кругликовская, 30\",\"business_type\":\"pvz\",\"rent\":85000,\"area_m2\":35,\"floor\":1,\"first_floor\":true,\"separate_entrance\":true,\"parking\":true,\"signage_possible\":true,\"storage_area\":true,\"repair_condition\":\"normal\",\"new_residential_area\":true,\"high_density_area\":true,\"bus_stop_nearby\":true,\"good_visibility\":true,\"expected_gross_income_by_user\":360000,\"investment\":600000,\"desired_profit\":80000}},{\"label\":\"Вариант B\",\"analysis_request\":{\"address\":\"Краснодар, ул. Красная, 1\",\"business_type\":\"pvz\",\"rent\":95000,\"area_m2\":40,\"floor\":1,\"first_floor\":true,\"separate_entrance\":true,\"parking\":false,\"signage_possible\":true,\"storage_area\":true,\"repair_condition\":\"normal\",\"new_residential_area\":false,\"high_density_area\":true,\"bus_stop_nearby\":true,\"good_visibility\":true,\"expected_gross_income_by_user\":340000,\"investment\":600000,\"desired_profit\":80000}}]}"
 ```
 
-Local checks:
+Load a saved compare session by id:
 
-```bash
+```powershell
+curl http://localhost:8000/api/v1/locations/compare/1
+```
+
+Saved compare session loading returns the stored public response snapshot from
+`compare_sessions.response_snapshot`. It does not rerun providers, analysis,
+scoring, finance, report generation, or ranking.
+
+## Verification Commands
+
+Ordinary local checks:
+
+```powershell
 docker compose config
 uv run pytest -v --tb=short
 uv run ruff check .
@@ -156,6 +182,10 @@ uv run mypy app
 
 Real provider tests are not part of ordinary test runs. They require explicit
 environment setup and the `external` marker.
+
+```powershell
+uv run pytest -m external
+```
 
 ## Local Run Without Docker
 
@@ -220,7 +250,8 @@ Detailed future planning lives in [Roadmap](docs/10_roadmap.md).
 - **MVP / V1.0**: implemented, local demo ready.
 - **V1.1**: stabilization, documentation hardening, report/map review, and
   fresh-clone checks are complete.
-- **V1.2**: compare mode and decision support.
+- **V1.2**: compare mode and decision support are implemented locally and
+  release-hardened with ordinary automated checks passing.
 - **V1.3**: export and reporting polish.
 - **V1.4**: manual refresh and deltas for saved locations.
 - **V1.5**: scoring governance and marketplace rule maturity.
@@ -239,7 +270,13 @@ premature multi-business expansion, and premature React rewrite are deferred.
 - Manual competitor checks are approximate evidence, not exact ground truth.
 - The 30-50 case manual benchmark is deferred and should not be described as
   completed validation evidence.
-- MVP supports only Krasnodar, `pvz`, and one-address analysis.
+- Scope remains Krasnodar and `business_type = "pvz"`.
+- Compare supports 2-5 newly entered candidate locations; saved analysis
+  references as compare inputs are deferred.
+- No ML ranking, ML revenue forecast, city-wide search, H3/grid scan, new
+  business types, scraping, Telegram/mobile/browser-agent wrapper, or official
+  marketplace compliance guarantee.
+- CSV, Excel, and PDF exports are not implemented in V1.2.
 
 ## Security Notes
 

@@ -15,7 +15,8 @@
 
 ## Current Status
 
-**MVP / V1.0 is implemented and local demo ready.**
+**V1.2 compare mode is implemented locally and release-hardened with ordinary
+automated checks passing.**
 
 Implemented scope:
 
@@ -26,6 +27,12 @@ Implemented scope:
 - AI/fallback report.
 - Checklist.
 - Streamlit UI with analysis, map, history, and detail views.
+- Compare mode for 2-5 newly entered candidate PVZ locations.
+- Deterministic compare ranking from visible response fields only.
+- Candidate-level compare failures with visible error details.
+- Saved compare sessions loaded from response snapshots.
+- Streamlit compare page and candidate-only compare map.
+- Markdown compare export from an existing compare response snapshot.
 - Docker Compose.
 - Fake/fallback demo path without external API keys or LLM key.
 - Optional real 2GIS/OSM providers and optional OpenAI-compatible LLM.
@@ -39,6 +46,7 @@ Known limitations:
 - Marketplace requirements are `needs_manual_check`.
 - Real provider quality depends on external data freshness and coverage.
 - No profit guarantee or automatic revenue forecast.
+- CSV/PDF/Excel exports are deferred reporting/export polish.
 
 ## V1.1 — Stabilization, Validation, Documentation Hardening
 
@@ -96,33 +104,44 @@ between candidate locations.
 
 **Why:** users usually decide between several premises, not one isolated point.
 
-**Scope:**
+**Current status:** implemented locally and release-hardened with ordinary
+automated checks passing. The implemented export format is Markdown only.
 
-- Compare 2-5 saved or newly entered addresses.
+**Implemented scope:**
+
+- Compare 2-5 newly entered candidate locations.
 - Unified table: score, confidence, finance, decision, competitor counts.
-- Transparent ranking.
-- Trade-off explanation based on deterministic outputs.
-- Saved compare sessions.
-- Export comparison summary to Markdown/CSV or Excel.
+- Transparent deterministic ranking from visible response fields.
+- Candidate-level failures remain visible.
+- Saved compare sessions from request/response snapshots.
+- Streamlit compare page and candidate-only compare map.
+- Markdown comparison summary export from an existing compare response snapshot.
 
 **Non-goals:**
 
 - No ML ranking.
 - No automatic city-wide candidate search.
 - No change to per-address scoring logic unless separately versioned.
+- No saved analysis references as compare inputs in V1.2.
+- No CSV, Excel, or PDF export in V1.2.
 
 **Acceptance criteria:**
 
 - User can compare multiple addresses.
 - Each address still runs through the deterministic pipeline.
 - Ranking is explainable from visible metrics.
+- Saved compare sessions load stored response snapshots without rerunning
+  providers, analysis, scoring, finance, report generation, or ranking.
+- Ordinary automated checks pass.
 
-**Recommended Codex phases:**
+**Completed Codex phases:**
 
 1. Define compare API/UI contract.
 2. Build deterministic ranking and saved compare persistence.
 3. Add Streamlit compare view.
 4. Add focused tests for ordering and saved sessions.
+5. Add Markdown compare export from existing response snapshots.
+6. Complete documentation and release hardening.
 
 ## V1.3 — Export and Reporting Polish
 
@@ -134,7 +153,8 @@ result.
 
 **Scope:**
 
-- Markdown/PDF/Excel exports.
+- Broader export/reporting polish beyond the V1.2 Markdown compare helper.
+- CSV/PDF/Excel exports if still needed.
 - Better report layout without changing decision logic.
 - Sections: summary, risks, finance, competitors, checklist, assumptions.
 - Clear labels for user hypotheses.
@@ -155,7 +175,7 @@ result.
 **Recommended Codex phases:**
 
 1. Define export data contract from existing analysis response.
-2. Implement Markdown/CSV first, then PDF/Excel if still needed.
+2. Decide whether CSV/PDF/Excel are still needed after the V1.2 Markdown helper.
 3. Add report/export regression tests.
 4. Validate exported files manually.
 

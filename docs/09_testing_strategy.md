@@ -40,7 +40,7 @@ Expected coverage themes:
 - `business_type` is limited to `pvz`.
 - Marketplace statuses reject automatic `passed` / `failed` in MVP.
 
-V1.2-1 compare schema contract coverage:
+V1.2 compare schema contract coverage:
 
 - Compare request accepts 2, 3, 4, and 5 candidates.
 - Compare request rejects 0, 1, and 6 candidates.
@@ -48,7 +48,7 @@ V1.2-1 compare schema contract coverage:
 - Ranking metadata is present, deterministic, and has `uses_llm = false`.
 - Ordinary compare schema tests do not call real external providers.
 
-V1.2-4 compare persistence coverage:
+V1.2 compare persistence coverage:
 
 - Compare session migration creates `compare_sessions`.
 - Compare ORM model is imported into SQLAlchemy metadata.
@@ -59,8 +59,11 @@ V1.2-4 compare persistence coverage:
   without rerunning analysis, providers, scoring, finance, report generation, or
   ranking.
 
-V1.2-6 compare Markdown export coverage:
+V1.2 compare Markdown export coverage:
 
+- Compare export tests cover implemented formats only. Current V1.2 export is
+  Markdown; CSV, PDF, and Excel are deferred unless added in a later reporting
+  phase.
 - Markdown export contains all successful and failed candidates, ranking rules,
   warnings, assumptions, limitation notes, and the profit disclaimer.
 - Failed candidates export with `status = failed` and error fields.
@@ -68,6 +71,14 @@ V1.2-6 compare Markdown export coverage:
   failed candidates in saved response order.
 - Export tests are pure unit tests over `CompareResponse` snapshots and make no
   network, provider, DB, HTTP, analysis, or LLM calls.
+
+V1.2 UI API client coverage:
+
+- Streamlit API client posts compare payloads to
+  `POST /api/v1/locations/compare`.
+- Streamlit API client loads saved compare sessions from
+  `GET /api/v1/locations/compare/{compare_id}`.
+- UI client tests preserve normalized API errors without real HTTP calls.
 
 ### Integration tests
 
@@ -98,7 +109,19 @@ Important scenarios:
 - Compare endpoint persists saved sessions with full request/response snapshots,
   and `GET /api/v1/locations/compare/{compare_id}` returns the stored snapshot
   without real provider calls or recalculation.
+- Compare endpoint preserves ambiguous candidate suggestions per failed
+  candidate.
 - Ordinary integration tests do not make network calls.
+
+### Streamlit manual smoke checks
+
+Manual UI smoke checks should verify the compare page can submit 2-5 newly
+entered candidates, show ranked successful candidates, show failed candidates,
+render the successful-candidate map, and offer Markdown download after a
+successful compare response.
+
+For V1.2, the local compare-mode Streamlit flow was manually reviewed by the
+owner after release hardening and accepted as working.
 
 ### Mock and external provider strategy
 
@@ -231,5 +254,5 @@ uv run pytest -m external
 ```
 
 `uv run pytest -m external` is optional/manual external-provider evidence. It is
-not part of ordinary V1.1 automated gates unless external provider checks are
+not part of ordinary automated gates unless external provider checks are
 intentionally enabled for that run.
