@@ -1,9 +1,20 @@
+import importlib
 from datetime import UTC, datetime
+from pathlib import Path
 from typing import Any
 
 from app.config.scoring_rules import DECISION_RULES
 from app.schemas.compare import DEFAULT_COMPARE_RANKING_RULES, CompareResponse
-from app.services.compare_export import export_compare_markdown
+from app.services import compare_export
+from app.services.compare_export import (
+    COMPARE_EXPORT_ALLOWED_SECTIONS,
+    COMPARE_EXPORT_PROHIBITED_CATEGORIES,
+    COMPARE_EXPORT_SOURCE_OF_TRUTH,
+    EXPORT_DISCLAIMER,
+    export_compare_markdown,
+)
+
+COMPARE_EXPORT_SOURCE = Path("app/services/compare_export.py")
 
 
 def test_export_compare_markdown_contains_snapshot_summary_only() -> None:
@@ -28,6 +39,113 @@ def test_export_compare_markdown_contains_snapshot_summary_only() -> None:
     assert "best location because" not in markdown.lower()
     assert "recommendation" not in markdown.lower()
     assert markdown.index("candidate-2") < markdown.index("candidate-1")
+
+
+def test_compare_fixture_validates_before_contract_assertions() -> None:
+    response = _compare_response()
+
+    assert response.summary.requested_count == 3
+    assert response.ranking_rules.uses_llm is False
+    assert response.ranked_candidates[0].candidate_id == "candidate-2"
+    assert response.failed_candidates[0].error.suggestions
+
+
+def test_compare_export_contract_allows_existing_compare_json_fields_only() -> None:
+    contract_text = _contract_text(
+        COMPARE_EXPORT_ALLOWED_SECTIONS,
+        COMPARE_EXPORT_SOURCE_OF_TRUTH,
+    )
+
+    expected_sources = (
+        "CompareResponse.summary",
+        "CompareResponse.compare_id",
+        "CompareResponse.created_at",
+        "CompareResponse.ranking_rules.version",
+        "CompareResponse.ranking_rules.sort_keys",
+        "CompareResponse.ranking_rules.decision_severity_order",
+        "CompareResponse.ranking_rules.uses_llm = false",
+        "CompareResponse.ranked_candidates",
+        "CompareResponse.ranked_candidates.*.score",
+        "CompareResponse.ranked_candidates.*.finance",
+        "CompareResponse.ranked_candidates.*.competitors",
+        "CompareResponse.ranked_candidates.*.assumptions",
+        "CompareResponse.ranked_candidates.*.warnings",
+        "CompareResponse.ranked_candidates.*.trade_offs",
+        "CompareResponse.failed_candidates.*.status",
+        "CompareResponse.failed_candidates.*.error.code",
+        "CompareResponse.failed_candidates.*.error.message",
+        "CompareResponse.failed_candidates.*.error.details",
+        "CompareResponse.failed_candidates.*.error.suggestions",
+    )
+    for source in expected_sources:
+        assert source in contract_text
+
+    assert "only when present in public compare JSON" in contract_text
+    assert "when already present" in contract_text
+
+
+def test_compare_export_contract_prohibits_unsafe_categories() -> None:
+    contract_text = _contract_text(COMPARE_EXPORT_PROHIBITED_CATEGORIES).lower()
+
+    expected_prohibitions = (
+        "llm-authored ranking conclusions",
+        "recomputed ranking",
+        "new score calculations",
+        "new finance calculations",
+        "new confidence calculations",
+        "new decision calculations",
+        "invented competitor facts",
+        "invented traffic facts",
+        "invented revenue forecasts",
+        "raw external api responses",
+        "regenerated report text",
+    )
+    for prohibition in expected_prohibitions:
+        assert prohibition in contract_text
+
+
+def test_compare_export_disclaimer_states_no_profit_guarantee() -> None:
+    assert "PlaceFit does not guarantee profit" in EXPORT_DISCLAIMER
+    assert "manual verification" in EXPORT_DISCLAIMER
+    assert "not official compliance confirmation" in EXPORT_DISCLAIMER
+
+
+def test_compare_export_contract_preserves_uses_llm_false_expectation() -> None:
+    contract_text = _contract_text(
+        COMPARE_EXPORT_ALLOWED_SECTIONS,
+        COMPARE_EXPORT_SOURCE_OF_TRUTH,
+    )
+
+    assert "CompareResponse.ranking_rules.uses_llm = false" in contract_text
+    assert DEFAULT_COMPARE_RANKING_RULES.uses_llm is False
+
+
+def test_compare_export_contract_import_is_snapshot_only() -> None:
+    module = importlib.import_module("app.services.compare_export")
+
+    assert module.EXPORT_DISCLAIMER == compare_export.EXPORT_DISCLAIMER
+
+    source = COMPARE_EXPORT_SOURCE.read_text(encoding="utf-8")
+    forbidden_snippets = (
+        "from app.providers",
+        "import app.providers",
+        "from app.services.analysis",
+        "from app.services.compare",
+        "from app.services.geocoding",
+        "from app.services.competitors",
+        "from app.services.scoring",
+        "from app.services.finance",
+        "from app.services.confidence",
+        "from app.services.decision",
+        "from app.services.report",
+        "from app.providers.llm",
+        "httpx",
+        "requests",
+        "openai",
+        "sqlalchemy",
+    )
+    for snippet in forbidden_snippets:
+        assert snippet not in source
 
 
 def _compare_response() -> CompareResponse:
@@ -157,3 +275,7 @@ def _failed_candidate() -> dict[str, Any]:
             ],
         },
     }
+
+
+def _contract_text(*values: object) -> str:
+    return " ".join(str(value) for value in values)

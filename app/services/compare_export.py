@@ -1,4 +1,43 @@
-"""Pure compare summary exporter for Markdown."""
+"""Compare export data contract and pure Markdown renderer.
+
+Future compare or saved compare session exports may render only values already
+present in a ``CompareResponse`` object or a saved public response snapshot.
+Export code must not rerun geocoding, POI/provider calls, analysis, scoring,
+finance, confidence, decision, report generation, LLM calls, or compare
+ranking. It must not add facts that are absent from existing public compare
+JSON.
+
+Allowed source categories:
+
+- Compare summary fields from ``CompareResponse.summary`` and snapshot metadata
+  from ``CompareResponse.compare_id`` and ``CompareResponse.created_at``.
+- Ranking rules from ``CompareResponse.ranking_rules``, including ``version``,
+  ``sort_keys``, ``decision_severity_order``, and ``uses_llm``. The contract
+  expects ``uses_llm = false`` when that public field exists.
+- Ranked candidate fields already present in
+  ``CompareResponse.ranked_candidates``.
+- Candidate score, confidence, decision, finance summary, competitor summary,
+  marketplace warnings, assumptions, warnings, trade-offs, and checklist-like
+  fields only when already present in compare JSON.
+- Failed candidate status, error code/message/details, and ambiguous-address
+  suggestions from ``CompareResponse.failed_candidates``.
+- Compare-level assumptions and warnings only when present in a future public
+  compare response shape.
+- Compare limitations already present in current compare export/docs.
+
+Prohibited source categories:
+
+- Provider secrets, API keys, raw external API responses, raw provider payloads,
+  database internals, ORM-only fields, and non-public internal IDs.
+- Invented competitor facts, traffic facts, revenue forecasts, or official
+  marketplace compliance claims.
+- LLM-authored ranking conclusions, recomputed ranking, new score calculations,
+  new finance calculations, new confidence calculations, or new decision
+  calculations.
+- Regenerated report text, network calls, arbitrary export path handling,
+  filesystem reads outside normal source/test files, and new production
+  dependencies.
+"""
 
 from __future__ import annotations
 
@@ -6,13 +45,126 @@ from collections.abc import Iterable
 
 from app.schemas.compare import CompareResponse
 
-_LIMITATION_NOTES = [
+EXPORT_DISCLAIMER = (
+    "PlaceFit does not guarantee profit and does not replace manual "
+    "verification. Marketplace checks are manual-check guidance, not official "
+    "compliance confirmation."
+)
+
+COMPARE_EXPORT_LIMITATION_NOTES = [
     "PlaceFit does not guarantee profit.",
     "User-provided expected income is a hypothesis, not a system forecast.",
     "Marketplace requirements require manual verification from official sources.",
     "Export is generated from the compare response snapshot only.",
     "Export does not rerun analysis, providers, scoring, finance, reports, or ranking.",
 ]
+_LIMITATION_NOTES = COMPARE_EXPORT_LIMITATION_NOTES
+
+COMPARE_EXPORT_ALLOWED_SECTIONS = {
+    "summary": (
+        "CompareResponse.summary",
+        "CompareResponse.compare_id",
+        "CompareResponse.created_at",
+    ),
+    "ranking_rules": (
+        "CompareResponse.ranking_rules.version",
+        "CompareResponse.ranking_rules.sort_keys",
+        "CompareResponse.ranking_rules.decision_severity_order",
+        "CompareResponse.ranking_rules.uses_llm = false",
+    ),
+    "ranked_candidates": (
+        "CompareResponse.ranked_candidates",
+        "CompareResponse.ranked_candidates.*.score",
+        "CompareResponse.ranked_candidates.*.finance",
+        "CompareResponse.ranked_candidates.*.competitors",
+        "CompareResponse.ranked_candidates.*.assumptions",
+        "CompareResponse.ranked_candidates.*.warnings",
+        "CompareResponse.ranked_candidates.*.trade_offs",
+    ),
+    "failed_candidates": (
+        "CompareResponse.failed_candidates.*.status",
+        "CompareResponse.failed_candidates.*.error.code",
+        "CompareResponse.failed_candidates.*.error.message",
+        "CompareResponse.failed_candidates.*.error.details",
+        "CompareResponse.failed_candidates.*.error.suggestions",
+    ),
+    "assumptions": (
+        "Candidate assumptions already present in compare JSON.",
+        "Compare-level assumptions only when present in public compare JSON.",
+    ),
+    "warnings": (
+        "Candidate warnings already present in compare JSON.",
+        "Compare-level warnings only when present in public compare JSON.",
+        "Failed candidates already present in compare JSON.",
+    ),
+    "trade_offs": (
+        "CompareResponse.ranked_candidates.*.trade_offs when already present.",
+    ),
+    "limitations": ("Compare limitations already present in current export/docs.",),
+    "disclaimer": (EXPORT_DISCLAIMER,),
+}
+
+COMPARE_EXPORT_PROHIBITED_CATEGORIES = (
+    "provider secrets",
+    "API keys",
+    "raw external API responses",
+    "raw provider payloads",
+    "database internals not present in public response JSON",
+    "ORM-only fields not present in response schemas",
+    "internal IDs unless already public response fields",
+    "invented competitor facts",
+    "invented traffic facts",
+    "invented revenue forecasts",
+    "official marketplace compliance claims",
+    "LLM-authored ranking conclusions",
+    "new score calculations",
+    "new finance calculations",
+    "new confidence calculations",
+    "new decision calculations",
+    "recomputed ranking",
+    "regenerated report text",
+    "regenerated fallback report text",
+    "network calls",
+    "filesystem reads outside normal source/test files",
+    "arbitrary export path handling",
+    "new production dependency",
+)
+
+COMPARE_EXPORT_SOURCE_OF_TRUTH = {
+    "Summary": ("CompareResponse.summary",),
+    "Risks": (
+        "CompareResponse.failed_candidates",
+        "CompareResponse.ranked_candidates.*.warnings",
+        "CompareResponse.ranked_candidates.*.score.confidence_score",
+        "CompareResponse.ranked_candidates.*.score.decision",
+    ),
+    "Finance": (
+        "CompareResponse.ranked_candidates.*.finance.monthly_costs",
+        "CompareResponse.ranked_candidates.*.finance.required_gross_income",
+        "CompareResponse.ranked_candidates.*.finance.expected_gross_income_by_user",
+        "CompareResponse.ranked_candidates.*.finance.net_profit",
+        "CompareResponse.ranked_candidates.*.finance.payback_months",
+    ),
+    "Competitors": ("CompareResponse.ranked_candidates.*.competitors",),
+    "Checklist": (
+        "CompareResponse.ranked_candidates.*.assumptions",
+        "CompareResponse.ranked_candidates.*.warnings",
+        "CompareResponse.ranked_candidates.*.trade_offs",
+    ),
+    "Assumptions": (
+        "CompareResponse.ranked_candidates.*.assumptions",
+        "Compare-level assumptions only when present in public compare JSON.",
+        "expected_gross_income_by_user is a user hypothesis, not a system forecast.",
+    ),
+    "Warnings": (
+        "CompareResponse.ranked_candidates.*.warnings",
+        "CompareResponse.failed_candidates",
+    ),
+    "Limitations": (
+        "Compare limitations already present in current export/docs.",
+    ),
+    "Disclaimer": (EXPORT_DISCLAIMER,),
+}
 
 
 def export_compare_markdown(response: CompareResponse) -> str:
