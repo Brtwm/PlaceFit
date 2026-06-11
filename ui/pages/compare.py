@@ -5,11 +5,9 @@ from __future__ import annotations
 from typing import Any
 
 import streamlit as st
-from app.schemas.compare import CompareResponse
-from app.services.compare_export import export_compare_markdown
-from pydantic import ValidationError
 
 from ui.api_client import ApiClient, ApiError
+from ui.components.export_controls import render_compare_download_controls
 from ui.components.layout import render_page_header, setup_page
 from ui.components.map import render_compare_map
 
@@ -59,7 +57,7 @@ def main() -> None:
     st.info(
         "Текущий UI сравнивает только новые введённые адреса. "
         "Выбор сохранённых анализов не реализован в этой фазе. "
-        "Markdown экспорт доступен после успешного сравнения.",
+        "Экспорт доступен после успешного сравнения.",
     )
 
     payload = _render_form()
@@ -152,11 +150,12 @@ def _render_form() -> dict[str, Any] | None:
         )
         f1, f2, f3 = st.columns(3)
         expected_income = f1.number_input(
-            "Ожидаемый доход, ₽/мес",
+            "Гипотеза пользователя по валовой выручке, ₽/мес",
             min_value=0,
             step=10000,
             key="compare_expected_gross_income_by_user",
         )
+        f1.caption("Это введенная пользователем гипотеза, а не прогноз PlaceFit.")
         investment = f2.number_input(
             "Инвестиции, ₽",
             min_value=0,
@@ -288,7 +287,7 @@ def _validate_payload(payload: dict[str, Any]) -> list[str]:
 
 def _render_compare_result(result: dict[str, Any]) -> None:
     _render_summary(result)
-    _render_export_buttons(result)
+    render_compare_download_controls(result)
 
     ranked = result.get("ranked_candidates") or []
     failed = result.get("failed_candidates") or []
@@ -334,24 +333,6 @@ def _render_summary(result: dict[str, Any]) -> None:
     st.caption(f"Создано: {_value(result.get('created_at'))}")
 
 
-def _render_export_buttons(result: dict[str, Any]) -> None:
-    try:
-        response = CompareResponse.model_validate(result)
-    except ValidationError:
-        st.error(
-            "Не удалось подготовить экспорт: результат сравнения имеет "
-            "неожиданный формат.",
-        )
-        return
-
-    st.download_button(
-        "Скачать Markdown",
-        data=export_compare_markdown(response),
-        file_name="placefit_compare_summary.md",
-        mime="text/markdown",
-    )
-
-
 def _ranked_row(candidate: dict[str, Any]) -> dict[str, Any]:
     score = candidate.get("score") or {}
     finance = candidate.get("finance") or {}
@@ -379,6 +360,10 @@ def _render_ranking_rules(rules: dict[str, Any]) -> None:
         st.info("Правила ранжирования отсутствуют в ответе backend.")
         return
 
+    st.caption(
+        "Рейтинг сформирован по детерминированным правилам PlaceFit; "
+        "LLM не используется для ранжирования.",
+    )
     with st.expander("Правила ранжирования", expanded=False):
         st.write(
             {

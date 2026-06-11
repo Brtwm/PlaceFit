@@ -7,6 +7,7 @@ from typing import Any
 import streamlit as st
 
 from ui.api_client import ApiClient, ApiError
+from ui.components.export_controls import render_analysis_download_controls
 from ui.components.layout import render_page_header, setup_page
 from ui.components.result import render_analysis_result
 
@@ -61,6 +62,7 @@ def main() -> None:
     if isinstance(result, dict):
         st.markdown("### Результат анализа")
         render_analysis_result(result)
+        render_analysis_download_controls(result)
     else:
         st.info(
             "Заполните форму и отправьте анализ. "
@@ -119,11 +121,12 @@ def _render_form() -> dict[str, Any] | None:
         )
         f1, f2, f3 = st.columns(3)
         expected_income = f1.number_input(
-            "Ожидаемый доход, ₽/мес",
+            "Гипотеза пользователя по валовой выручке, ₽/мес",
             min_value=0,
             step=10000,
             key="expected_gross_income_by_user",
         )
+        f1.caption("Это введенная пользователем гипотеза, а не прогноз PlaceFit.")
         investment = f2.number_input(
             "Инвестиции, ₽",
             min_value=0,

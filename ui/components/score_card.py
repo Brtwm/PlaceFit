@@ -49,7 +49,7 @@ def render_finance(result: dict[str, Any]) -> None:
             ("Ежемесячные расходы", _rub(finance.get("monthly_costs")), None),
             ("Нужный доход", _rub(finance.get("required_gross_income")), None),
             (
-                "Ожидаемый доход",
+                "Гипотеза пользователя по валовой выручке",
                 _rub(finance.get("expected_gross_income_by_user")),
                 "Гипотеза пользователя",
             ),
@@ -59,7 +59,7 @@ def render_finance(result: dict[str, Any]) -> None:
         columns=5,
     )
     st.warning(
-        "Ожидаемый доход — гипотеза пользователя, не прогноз системы. "
+        "Гипотеза пользователя по валовой выручке — не прогноз PlaceFit. "
         "PlaceFit не гарантирует прибыль.",
         icon="⚠️",
     )
