@@ -37,6 +37,12 @@ Prohibited source categories:
 - Regenerated report text, network calls, arbitrary export path handling,
   filesystem reads outside normal source/test files, and new production
   dependencies.
+
+V1.3-6 boundary decision: compare exports are intentionally service/UI-only for
+local Streamlit downloads. Public backend export endpoints are deferred until
+API clients or non-Streamlit workflows need them. This renderer remains a pure
+snapshot renderer and must not rerun analysis, provider, scoring, finance,
+confidence, decision, report, LLM, or compare ranking work.
 """
 
 from __future__ import annotations
@@ -50,6 +56,9 @@ EXPORT_DISCLAIMER = (
     "verification. Marketplace checks are manual-check guidance, not official "
     "compliance confirmation."
 )
+
+COMPARE_EXPORT_BOUNDARY_DECISION = "service_only"
+COMPARE_EXPORT_API_ENDPOINTS_IMPLEMENTED = False
 
 COMPARE_EXPORT_LIMITATION_NOTES = [
     "PlaceFit does not guarantee profit.",

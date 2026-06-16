@@ -247,6 +247,11 @@ def test_analysis_export_disclaimer_states_no_profit_guarantee() -> None:
     assert "not official compliance confirmation" in analysis_export.EXPORT_DISCLAIMER
 
 
+def test_analysis_export_boundary_decision_is_service_only() -> None:
+    assert analysis_export.ANALYSIS_EXPORT_BOUNDARY_DECISION == "service_only"
+    assert analysis_export.ANALYSIS_EXPORT_API_ENDPOINTS_IMPLEMENTED is False
+
+
 def test_analysis_export_import_is_snapshot_only() -> None:
     module = importlib.import_module("app.services.analysis_export")
 
@@ -254,6 +259,10 @@ def test_analysis_export_import_is_snapshot_only() -> None:
 
     source = ANALYSIS_EXPORT_SOURCE.read_text(encoding="utf-8")
     forbidden_snippets = (
+        "from app.api",
+        "import app.api",
+        "APIRouter",
+        "FastAPI",
         "from app.providers",
         "import app.providers",
         "from app.services.analysis",
@@ -270,6 +279,10 @@ def test_analysis_export_import_is_snapshot_only() -> None:
         "requests",
         "openai",
         "sqlalchemy",
+        "from pathlib",
+        "import pathlib",
+        "from os",
+        "import os",
     )
     for snippet in forbidden_snippets:
         assert snippet not in source

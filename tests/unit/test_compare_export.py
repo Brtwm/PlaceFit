@@ -110,6 +110,11 @@ def test_compare_export_disclaimer_states_no_profit_guarantee() -> None:
     assert "not official compliance confirmation" in EXPORT_DISCLAIMER
 
 
+def test_compare_export_boundary_decision_is_service_only() -> None:
+    assert compare_export.COMPARE_EXPORT_BOUNDARY_DECISION == "service_only"
+    assert compare_export.COMPARE_EXPORT_API_ENDPOINTS_IMPLEMENTED is False
+
+
 def test_compare_export_contract_preserves_uses_llm_false_expectation() -> None:
     contract_text = _contract_text(
         COMPARE_EXPORT_ALLOWED_SECTIONS,
@@ -127,6 +132,10 @@ def test_compare_export_contract_import_is_snapshot_only() -> None:
 
     source = COMPARE_EXPORT_SOURCE.read_text(encoding="utf-8")
     forbidden_snippets = (
+        "from app.api",
+        "import app.api",
+        "APIRouter",
+        "FastAPI",
         "from app.providers",
         "import app.providers",
         "from app.services.analysis",
@@ -143,6 +152,10 @@ def test_compare_export_contract_import_is_snapshot_only() -> None:
         "requests",
         "openai",
         "sqlalchemy",
+        "from pathlib",
+        "import pathlib",
+        "from os",
+        "import os",
     )
     for snippet in forbidden_snippets:
         assert snippet not in source
