@@ -1,0 +1,191 @@
+{
+  "compare_id": 42,
+  "created_at": "2026-05-31T12:00:00Z",
+  "ranking_rules": {
+    "version": "v1.2-2",
+    "description": "Successful candidates are ranked deterministically from visible analysis fields. LLM output is not used for ranking.",
+    "sort_keys": [
+      {
+        "field": "score.total_score",
+        "direction": "desc",
+        "nulls": "none",
+        "description": "Higher deterministic total score ranks first."
+      },
+      {
+        "field": "score.confidence_score",
+        "direction": "desc",
+        "nulls": "none",
+        "description": "Higher deterministic confidence breaks score ties."
+      },
+      {
+        "field": "score.decision",
+        "direction": "asc",
+        "nulls": "none",
+        "description": "Decision severity order breaks remaining ties."
+      },
+      {
+        "field": "finance.net_profit",
+        "direction": "desc",
+        "nulls": "last",
+        "description": "Higher known net profit breaks remaining ties."
+      },
+      {
+        "field": "finance.payback_months",
+        "direction": "asc",
+        "nulls": "last",
+        "description": "Shorter payback breaks ties when available."
+      },
+      {
+        "field": "input_index",
+        "direction": "asc",
+        "nulls": "none",
+        "description": "Original input order is the final stable tie-break."
+      }
+    ],
+    "decision_severity_order": [
+      "можно рассматривать",
+      "проверить дополнительно",
+      "скорее не открывать"
+    ],
+    "uses_llm": false
+  },
+  "ranked_candidates": [
+    {
+      "candidate_id": "candidate-2",
+      "input_index": 1,
+      "rank": 1,
+      "label": "Candidate B",
+      "input_address": "Input address 1",
+      "status": "success",
+      "source_analysis_id": null,
+      "location_summary": {
+        "id": 2,
+        "address": "Resolved address 1",
+        "normalized_address": "Normalized address 1",
+        "lat": 45.036,
+        "lon": 39.029
+      },
+      "score": {
+        "total_score": 90,
+        "confidence_score": 87,
+        "scoring_version": "v1.0",
+        "decision": "можно рассматривать",
+        "details": {
+          "demand_score": 35,
+          "competition_score": 12,
+          "rent_score": 15,
+          "premises_score": 10,
+          "accessibility_score": 8
+        }
+      },
+      "finance": {
+        "monthly_costs": 295000,
+        "required_gross_income": 375000,
+        "expected_gross_income_by_user": 360000,
+        "net_profit": 80000,
+        "payback_months": 7.5
+      },
+      "competitors": {
+        "competitors_300m": 2,
+        "competitors_500m": 4,
+        "competitors_700m": 6,
+        "nearest_competitor_distance_m": 180,
+        "average_competitor_distance_m": 420
+      },
+      "assumptions": [
+        "expected_gross_income_by_user is a user hypothesis",
+        "Shared assumption"
+      ],
+      "warnings": [
+        "Marketplace requirements need manual verification",
+        "Shared warning"
+      ],
+      "trade_offs": []
+    },
+    {
+      "candidate_id": "candidate-1",
+      "input_index": 0,
+      "rank": 2,
+      "label": "Candidate A",
+      "input_address": "Input address 0",
+      "status": "success",
+      "source_analysis_id": null,
+      "location_summary": {
+        "id": 1,
+        "address": "Resolved address 0",
+        "normalized_address": "Normalized address 0",
+        "lat": 45.035,
+        "lon": 39.028
+      },
+      "score": {
+        "total_score": 80,
+        "confidence_score": 88,
+        "scoring_version": "v1.0",
+        "decision": "можно рассматривать",
+        "details": {
+          "demand_score": 35,
+          "competition_score": 12,
+          "rent_score": 15,
+          "premises_score": 10,
+          "accessibility_score": 8
+        }
+      },
+      "finance": {
+        "monthly_costs": 295000,
+        "required_gross_income": 375000,
+        "expected_gross_income_by_user": null,
+        "net_profit": null,
+        "payback_months": null
+      },
+      "competitors": {
+        "competitors_300m": 1,
+        "competitors_500m": 3,
+        "competitors_700m": 5,
+        "nearest_competitor_distance_m": null,
+        "average_competitor_distance_m": null
+      },
+      "assumptions": [
+        "Shared assumption",
+        "Second candidate assumption"
+      ],
+      "warnings": [
+        "Shared warning",
+        "Second candidate warning"
+      ],
+      "trade_offs": []
+    }
+  ],
+  "failed_candidates": [
+    {
+      "candidate_id": "candidate-3",
+      "input_index": 2,
+      "label": "Candidate C",
+      "input_address": "Краснодар, Восточно-Кругликовская 30",
+      "status": "failed",
+      "error": {
+        "code": "ADDRESS_AMBIGUOUS",
+        "message": "Найдено несколько вариантов адреса",
+        "details": "ambiguous address",
+        "suggestions": [
+          {
+            "address": "г Краснодар, ул Восточно-Кругликовская, д 30",
+            "lat": 45.035,
+            "lon": 39.028,
+            "confidence": 0.82
+          },
+          {
+            "address": "г Краснодар, ул Восточно-Кругликовская, д 30/1",
+            "lat": 45.036,
+            "lon": 39.029,
+            "confidence": 0.78
+          }
+        ]
+      }
+    }
+  ],
+  "summary": {
+    "requested_count": 3,
+    "successful_count": 2,
+    "failed_count": 1
+  }
+}

@@ -101,6 +101,7 @@ def test_render_analysis_markdown_preserves_fallback_report_text() -> None:
     markdown = analysis_export.render_analysis_markdown(response)
 
     assert report_text in markdown
+    assert markdown.count(report_text) == 1
     assert "| report.status | fallback |" in markdown
     assert "existing fallback report text" in markdown
     assert "Export does not regenerate report text" in markdown
@@ -115,11 +116,113 @@ def test_render_analysis_markdown_uses_stable_competitor_order() -> None:
     assert first < second
 
 
+def test_render_analysis_markdown_escapes_tables_and_preserves_checklist_order(
+) -> None:
+    payload = _analysis_response().model_dump(mode="json")
+    payload["competitors"]["list"][0]["name"] = "Ozon | Центр\nЮг"
+    payload["checklist"] = ["Сначала проверить вход", "Затем проверить аренду"]
+    response = AnalysisResponse.model_validate(payload)
+
+    markdown = analysis_export.render_analysis_markdown(response)
+
+    assert "Ozon \\| Центр Юг" in markdown
+    assert markdown.index("Сначала проверить вход") < markdown.index(
+        "Затем проверить аренду",
+    )
+
+
+def test_render_analysis_markdown_risks_come_from_snapshot_fields() -> None:
+    payload = _analysis_response().model_dump(mode="json")
+    payload["score"]["confidence_score"] = 65
+    payload["competitors"]["competitors_700m"] = 7
+    payload["competitors"]["nearest_competitor_distance_m"] = None
+    payload["competitors"]["average_competitor_distance_m"] = None
+    payload["competitors"]["list"][0]["rating"] = None
+    payload["competitors"]["list"][0]["reviews_count"] = None
+    payload["competitors"]["list"][0]["lat"] = None
+    payload["competitors"]["list"][0]["lon"] = None
+    payload["finance"]["expected_gross_income_by_user"] = None
+    payload["finance"]["net_profit"] = None
+    payload["finance"]["payback_months"] = None
+    payload["report"] = {
+        "status": "fallback",
+        "text": "Snapshot fallback text",
+        "provider": "fallback",
+        "model": "none",
+        "prompt_version": "v1.0",
+    }
+    response = AnalysisResponse.model_validate(payload)
+
+    markdown = analysis_export.render_analysis_markdown(response)
+
+    assert "Confidence score is below 70/100 in the response snapshot." in markdown
+    assert (
+        "Competitor count within 700m is high in the response snapshot: 7."
+        in markdown
+    )
+    assert "Net profit is not calculated in the response snapshot." in markdown
+    assert "Payback months are not calculated in the response snapshot." in markdown
+    assert "Report status is fallback in the response snapshot." in markdown
+    assert "| finance.expected_gross_income_by_user |  |" in markdown
+    assert "| finance.net_profit |  |" in markdown
+    assert "| finance.payback_months |  |" in markdown
+    assert "| competitors.nearest_competitor_distance_m |  |" in markdown
+    assert "| competitors.average_competitor_distance_m |  |" in markdown
+    assert (
+        "| 1 | Ozon пункт выдачи | Ozon | pvz | "
+        "г Краснодар, ул Восточно-Кругликовская, д 31 | 180 |  |  | 2gis |  |  |"
+    ) in markdown
+
+
+def test_render_analysis_markdown_does_not_add_untriggered_risks() -> None:
+    payload = _analysis_response().model_dump(mode="json")
+    payload["competitors"]["competitors_700m"] = 4
+    response = AnalysisResponse.model_validate(payload)
+
+    markdown = analysis_export.render_analysis_markdown(response)
+
+    assert "Confidence score is below 70/100" not in markdown
+    assert "Competitor count within 700m is high" not in markdown
+    assert "Net profit is not calculated" not in markdown
+    assert "Payback months are not calculated" not in markdown
+    assert "Report status is fallback" not in markdown
+
+
+def test_render_analysis_markdown_does_not_invent_unsupported_facts() -> None:
+    markdown = analysis_export.render_analysis_markdown(_analysis_response()).lower()
+
+    unsupported_claims = (
+        "foot traffic is high",
+        "monthly revenue forecast",
+        "guaranteed profit",
+        "officially compliant",
+        "ai recommends this location",
+    )
+    for claim in unsupported_claims:
+        assert claim not in markdown
+
+    assert "needs_manual_check" in markdown
+    assert "manual verification from official sources" in markdown
+
+
 def test_render_analysis_markdown_does_not_call_runtime_services(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    import httpx
+    from app.providers import factory as provider_factory
+    from app.providers.geocoder.dgis import DgisGeocoder
+    from app.providers.geocoder.fake import FakeGeocoder
+    from app.providers.llm import openai_compatible
+    from app.providers.llm.fallback import FallbackReportProvider
+    from app.providers.llm.openai_compatible import OpenAICompatibleReportProvider
+    from app.providers.poi_search.dgis import DgisPoiSearchProvider
+    from app.providers.poi_search.fake import FakePoiSearchProvider
+    from app.providers.poi_search.osm import OsmPoiSearchProvider
     from app.services import (
         analysis as analysis_service,
+    )
+    from app.services import (
+        compare as compare_service,
     )
     from app.services import (
         competitors as competitors_service,
@@ -142,10 +245,22 @@ def test_render_analysis_markdown_does_not_call_runtime_services(
     from app.services import (
         scoring as scoring_service,
     )
+    from sqlalchemy.orm import Session
 
     monkeypatch.setattr(
         analysis_service.AnalysisService,
         "analyze",
+        _raise_if_called,
+    )
+    monkeypatch.setattr(
+        analysis_service.AnalysisService,
+        "get_location_detail",
+        _raise_if_called,
+    )
+    monkeypatch.setattr(compare_service.CompareService, "compare", _raise_if_called)
+    monkeypatch.setattr(
+        compare_service.CompareService,
+        "get_saved_compare_session",
         _raise_if_called,
     )
     monkeypatch.setattr(
@@ -167,6 +282,33 @@ def test_render_analysis_markdown_does_not_call_runtime_services(
         "generate_report",
         _raise_if_called,
     )
+    monkeypatch.setattr(
+        FallbackReportProvider,
+        "generate",
+        _raise_if_called,
+    )
+    monkeypatch.setattr(
+        OpenAICompatibleReportProvider,
+        "generate",
+        _raise_if_called,
+    )
+    monkeypatch.setattr(DgisGeocoder, "geocode", _raise_if_called)
+    monkeypatch.setattr(FakeGeocoder, "geocode", _raise_if_called)
+    monkeypatch.setattr(DgisPoiSearchProvider, "search", _raise_if_called)
+    monkeypatch.setattr(FakePoiSearchProvider, "search", _raise_if_called)
+    monkeypatch.setattr(OsmPoiSearchProvider, "search", _raise_if_called)
+    monkeypatch.setattr(
+        provider_factory,
+        "build_geocoder_provider",
+        _raise_if_called,
+    )
+    monkeypatch.setattr(provider_factory, "build_poi_providers", _raise_if_called)
+    monkeypatch.setattr(httpx, "request", _raise_if_called)
+    monkeypatch.setattr(openai_compatible, "urlopen", _raise_if_called)
+    monkeypatch.setattr(Session, "get", _raise_if_called)
+    monkeypatch.setattr(Session, "execute", _raise_if_called)
+    monkeypatch.setattr(Path, "open", _raise_if_called)
+    monkeypatch.setattr(Path, "read_text", _raise_if_called)
 
     markdown = analysis_export.render_analysis_markdown(_analysis_response())
 
@@ -278,6 +420,8 @@ def test_analysis_export_import_is_snapshot_only() -> None:
         "httpx",
         "requests",
         "openai",
+        "urllib",
+        "socket",
         "sqlalchemy",
         "from pathlib",
         "import pathlib",

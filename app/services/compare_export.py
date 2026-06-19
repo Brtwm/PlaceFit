@@ -305,6 +305,34 @@ def export_compare_markdown(response: CompareResponse) -> str:
     lines.extend(
         [
             "",
+            "### Ambiguous-address Suggestions",
+            "",
+            (
+                "| candidate_id | suggestion_index | address | lat | lon | "
+                "confidence |"
+            ),
+            "|---|---|---|---|---|---|",
+        ],
+    )
+
+    for failed_candidate in response.failed_candidates:
+        for index, suggestion in enumerate(
+            failed_candidate.error.suggestions or [],
+            start=1,
+        ):
+            lines.append(
+                "| "
+                f"{_markdown_value(failed_candidate.candidate_id)} | "
+                f"{_markdown_value(index)} | "
+                f"{_markdown_value(suggestion.address)} | "
+                f"{_markdown_value(suggestion.lat)} | "
+                f"{_markdown_value(suggestion.lon)} | "
+                f"{_markdown_value(suggestion.confidence)} |",
+            )
+
+    lines.extend(
+        [
+            "",
             "## Assumptions",
             "",
             *_markdown_list(

@@ -1,8 +1,10 @@
 import importlib
+import json
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+import pytest
 from app.config.scoring_rules import DECISION_RULES
 from app.schemas.compare import DEFAULT_COMPARE_RANKING_RULES, CompareResponse
 from app.services import compare_export
@@ -15,6 +17,7 @@ from app.services.compare_export import (
 )
 
 COMPARE_EXPORT_SOURCE = Path("app/services/compare_export.py")
+FIXTURES_DIR = Path(__file__).resolve().parents[1] / "fixtures" / "api"
 
 
 def test_export_compare_markdown_contains_snapshot_summary_only() -> None:
@@ -42,12 +45,240 @@ def test_export_compare_markdown_contains_snapshot_summary_only() -> None:
 
 
 def test_compare_fixture_validates_before_contract_assertions() -> None:
-    response = _compare_response()
+    response = CompareResponse.model_validate(
+        _load_fixture("compare_response_valid.json"),
+    )
 
     assert response.summary.requested_count == 3
     assert response.ranking_rules.uses_llm is False
     assert response.ranked_candidates[0].candidate_id == "candidate-2"
     assert response.failed_candidates[0].error.suggestions
+
+
+def test_export_compare_markdown_is_deterministic() -> None:
+    response = _compare_response()
+
+    assert export_compare_markdown(response) == export_compare_markdown(response)
+
+
+def test_compare_export_includes_metadata_and_complete_ranking_rules() -> None:
+    response = _compare_response()
+
+    markdown = export_compare_markdown(response)
+
+    expected_values = (
+        "| compare_id | 42 |",
+        "| created_at | 2026-05-31T12:00:00+00:00 |",
+        "| requested_count | 3 |",
+        "| successful_count | 2 |",
+        "| failed_count | 1 |",
+        f"| ranking_rules.version | {response.ranking_rules.version} |",
+        "| ranking_rules.uses_llm | False |",
+        response.ranking_rules.description,
+        "Decision severity order: "
+        + " -> ".join(response.ranking_rules.decision_severity_order),
+    )
+    for value in expected_values:
+        assert value in markdown
+    for sort_key in response.ranking_rules.sort_keys:
+        assert sort_key.field in markdown
+
+
+def test_compare_export_preserves_snapshot_order_without_resorting() -> None:
+    payload = _compare_response().model_dump(mode="json")
+    payload["ranked_candidates"][0]["score"]["total_score"] = 1
+    payload["ranked_candidates"][1]["score"]["total_score"] = 100
+    response = CompareResponse.model_validate(payload)
+
+    markdown = export_compare_markdown(response)
+
+    assert markdown.index("candidate-2") < markdown.index("candidate-1")
+
+
+def test_compare_export_preserves_ambiguous_address_suggestions() -> None:
+    markdown = export_compare_markdown(_compare_response())
+
+    first = "г Краснодар, ул Восточно-Кругликовская, д 30"
+    second = "г Краснодар, ул Восточно-Кругликовская, д 30/1"
+
+    assert first in markdown
+    assert second in markdown
+    assert markdown.index(first) < markdown.index(second)
+
+
+def test_compare_export_includes_complete_failed_candidate_snapshot() -> None:
+    markdown = export_compare_markdown(_compare_response())
+
+    assert "## Failed Candidates" in markdown
+    assert (
+        "| candidate-3 | 2 | Candidate C | failed | "
+        "Краснодар, Восточно-Кругликовская 30 | ADDRESS_AMBIGUOUS | "
+        "Найдено несколько вариантов адреса | ambiguous address | 2 |"
+    ) in markdown
+    assert "| candidate-3 | 1 |" in markdown
+    assert "| candidate-3 | 2 |" in markdown
+
+
+def test_compare_export_keeps_failed_section_when_there_are_no_failures() -> None:
+    payload = _compare_response().model_dump(mode="json")
+    payload["failed_candidates"] = []
+    payload["summary"]["requested_count"] = 2
+    payload["summary"]["failed_count"] = 0
+    response = CompareResponse.model_validate(payload)
+
+    markdown = export_compare_markdown(response)
+
+    assert "## Failed Candidates" in markdown
+    assert "### Ambiguous-address Suggestions" in markdown
+    assert "| candidate_id | input_index | label | status |" in markdown
+
+
+def test_compare_export_aggregates_assumptions_and_warnings_first_seen() -> None:
+    response = CompareResponse.model_validate(
+        _load_fixture("compare_response_valid.json"),
+    )
+
+    markdown = export_compare_markdown(response)
+
+    assert markdown.count("- Shared assumption") == 1
+    assert markdown.count("- Shared warning") == 1
+    assert markdown.index("- Shared assumption") < markdown.index(
+        "- Second candidate assumption",
+    )
+    assert markdown.index("- Shared warning") < markdown.index(
+        "- Second candidate warning",
+    )
+
+
+def test_compare_export_leaves_empty_assumptions_and_warnings_empty() -> None:
+    payload = _compare_response().model_dump(mode="json")
+    for candidate in payload["ranked_candidates"]:
+        candidate["assumptions"] = []
+        candidate["warnings"] = []
+    response = CompareResponse.model_validate(payload)
+
+    markdown = export_compare_markdown(response)
+    assumptions = markdown.split("## Assumptions\n", maxsplit=1)[1].split(
+        "## Warnings",
+        maxsplit=1,
+    )[0]
+    warnings = markdown.split("## Warnings\n", maxsplit=1)[1].split(
+        "## Limitation Notes",
+        maxsplit=1,
+    )[0]
+
+    assert "- " not in assumptions
+    assert "- " not in warnings
+
+
+def test_compare_export_escapes_snapshot_table_text() -> None:
+    payload = _compare_response().model_dump(mode="json")
+    payload["ranked_candidates"][0]["label"] = "Candidate | B\nSouth"
+    payload["failed_candidates"][0]["error"]["message"] = "Line 1 | Line 2\nLine 3"
+    response = CompareResponse.model_validate(payload)
+
+    markdown = export_compare_markdown(response)
+
+    assert "Candidate \\| B South" in markdown
+    assert "Line 1 \\| Line 2 Line 3" in markdown
+
+
+def test_compare_export_has_no_hidden_recommendation_or_compliance_claims() -> None:
+    markdown = export_compare_markdown(_compare_response()).lower()
+
+    unsupported_claims = (
+        "best location because the ai recommends it",
+        "guaranteed profit",
+        "officially compliant",
+        "is a system forecast",
+        "llm ranked",
+        "llm recommends",
+    )
+    for claim in unsupported_claims:
+        assert claim not in markdown
+
+    assert "not a system forecast" in markdown
+    assert "uses_llm | false" in markdown
+
+
+def test_compare_export_does_not_call_runtime_services(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import httpx
+    from app.providers import factory as provider_factory
+    from app.providers.geocoder.dgis import DgisGeocoder
+    from app.providers.geocoder.fake import FakeGeocoder
+    from app.providers.llm import openai_compatible
+    from app.providers.llm.fallback import FallbackReportProvider
+    from app.providers.llm.openai_compatible import OpenAICompatibleReportProvider
+    from app.providers.poi_search.dgis import DgisPoiSearchProvider
+    from app.providers.poi_search.fake import FakePoiSearchProvider
+    from app.providers.poi_search.osm import OsmPoiSearchProvider
+    from app.services import analysis as analysis_service
+    from app.services import compare as compare_service
+    from app.services import competitors as competitors_service
+    from app.services import confidence as confidence_service
+    from app.services import decision as decision_service
+    from app.services import finance as finance_service
+    from app.services import geocoding as geocoding_service
+    from app.services import report as report_service
+    from app.services import scoring as scoring_service
+    from sqlalchemy.orm import Session
+
+    monkeypatch.setattr(analysis_service.AnalysisService, "analyze", _raise_if_called)
+    monkeypatch.setattr(
+        analysis_service.AnalysisService,
+        "get_location_detail",
+        _raise_if_called,
+    )
+    monkeypatch.setattr(compare_service.CompareService, "compare", _raise_if_called)
+    monkeypatch.setattr(
+        compare_service.CompareService,
+        "get_saved_compare_session",
+        _raise_if_called,
+    )
+    monkeypatch.setattr(
+        geocoding_service.GeocodingService,
+        "geocode",
+        _raise_if_called,
+    )
+    monkeypatch.setattr(competitors_service, "search_competitors", _raise_if_called)
+    monkeypatch.setattr(scoring_service, "calculate_score", _raise_if_called)
+    monkeypatch.setattr(confidence_service, "calculate_confidence", _raise_if_called)
+    monkeypatch.setattr(finance_service, "calculate_finance", _raise_if_called)
+    monkeypatch.setattr(decision_service, "make_decision", _raise_if_called)
+    monkeypatch.setattr(
+        report_service.ReportService,
+        "generate_report",
+        _raise_if_called,
+    )
+    monkeypatch.setattr(FallbackReportProvider, "generate", _raise_if_called)
+    monkeypatch.setattr(
+        OpenAICompatibleReportProvider,
+        "generate",
+        _raise_if_called,
+    )
+    monkeypatch.setattr(DgisGeocoder, "geocode", _raise_if_called)
+    monkeypatch.setattr(FakeGeocoder, "geocode", _raise_if_called)
+    monkeypatch.setattr(DgisPoiSearchProvider, "search", _raise_if_called)
+    monkeypatch.setattr(FakePoiSearchProvider, "search", _raise_if_called)
+    monkeypatch.setattr(OsmPoiSearchProvider, "search", _raise_if_called)
+    monkeypatch.setattr(
+        provider_factory,
+        "build_geocoder_provider",
+        _raise_if_called,
+    )
+    monkeypatch.setattr(provider_factory, "build_poi_providers", _raise_if_called)
+    monkeypatch.setattr(httpx, "request", _raise_if_called)
+    monkeypatch.setattr(openai_compatible, "urlopen", _raise_if_called)
+    monkeypatch.setattr(Session, "get", _raise_if_called)
+    monkeypatch.setattr(Session, "execute", _raise_if_called)
+    monkeypatch.setattr(Path, "open", _raise_if_called)
+    monkeypatch.setattr(Path, "read_text", _raise_if_called)
+
+    markdown = export_compare_markdown(_compare_response())
+
+    assert "# PlaceFit Compare Summary" in markdown
 
 
 def test_compare_export_contract_allows_existing_compare_json_fields_only() -> None:
@@ -151,6 +382,8 @@ def test_compare_export_contract_import_is_snapshot_only() -> None:
         "httpx",
         "requests",
         "openai",
+        "urllib",
+        "socket",
         "sqlalchemy",
         "from pathlib",
         "import pathlib",
@@ -288,6 +521,15 @@ def _failed_candidate() -> dict[str, Any]:
             ],
         },
     }
+
+
+def _load_fixture(name: str) -> dict[str, object]:
+    with (FIXTURES_DIR / name).open(encoding="utf-8") as file:
+        return json.load(file)
+
+
+def _raise_if_called(*args: object, **kwargs: object) -> None:
+    raise AssertionError("Runtime service should not be called by export renderer")
 
 
 def _contract_text(*values: object) -> str:
