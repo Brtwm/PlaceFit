@@ -6,13 +6,18 @@ The backend deterministically calculates competitors, score, confidence,
 finance, decision, and compare ranking; an LLM, when enabled, only explains
 prepared analysis JSON.
 
-Status: **V1.2 compare mode implemented locally; release hardening completed
-with ordinary automated checks passing.** The normal demo path works without
-external API keys and without an LLM key by using fake geodata providers and a
-fallback report.
+Status: **V1.3 export and reporting polish is implemented and accepted locally
+for Markdown-only Streamlit downloads.** Single-analysis, saved-detail, and compare
+exports are generated from already loaded response snapshots and do not rerun
+providers, analysis, scoring, finance, report generation, LLM calls, or compare
+ranking. CSV, Excel, PDF, and public export API endpoints remain deferred.
 
-The 30-50 case manual benchmark remains deferred and should not be described as
-completed validation evidence.
+The normal demo path works without external API keys and without an LLM key by
+using fake geodata providers and a fallback report.
+
+The owner completed a 45-case manual validation benchmark and reported all
+checks as passing. Detailed case sheets are not committed; the repository
+records the owner-confirmed aggregate result.
 
 ## Scope
 
@@ -37,7 +42,16 @@ V1.2 additions:
 - Saved compare sessions are loaded from stored response snapshots.
 - Streamlit compare page with ranked table, failed candidates, and map.
 - Markdown export from an existing compare response snapshot.
-- CSV, Excel, and PDF export are deferred reporting/export polish.
+
+V1.3 additions:
+
+- Markdown export for a new analysis, saved analysis detail, and compare result.
+- Streamlit download controls for implemented Markdown formats only.
+- Pure snapshot rendering that does not regenerate reports or recalculate
+  deterministic outputs and ranking.
+- Service/UI-only export boundary; no public export API endpoint or API client
+  export method.
+- CSV, Excel, and PDF remain deferred.
 
 ## Non-Goals
 
@@ -252,7 +266,8 @@ Detailed future planning lives in [Roadmap](docs/10_roadmap.md).
   fresh-clone checks are complete.
 - **V1.2**: compare mode and decision support are implemented locally and
   release-hardened with ordinary automated checks passing.
-- **V1.3**: export and reporting polish.
+- **V1.3**: Markdown-only export and reporting polish is implemented and accepted locally;
+  CSV, Excel, PDF, and public export APIs remain deferred.
 - **V1.4**: manual refresh and deltas for saved locations.
 - **V1.5**: scoring governance and marketplace rule maturity.
 - **V2**: city-wide location intelligence for PVZ only.
@@ -268,15 +283,15 @@ premature multi-business expansion, and premature React rewrite are deferred.
 - Marketplace requirements require manual verification from official sources.
 - Geodata quality depends on provider freshness and coverage.
 - Manual competitor checks are approximate evidence, not exact ground truth.
-- The 30-50 case manual benchmark is deferred and should not be described as
-  completed validation evidence.
+- A 45-case manual validation benchmark was completed by the owner with all
+  checks reported as passing; detailed case sheets are not committed.
 - Scope remains Krasnodar and `business_type = "pvz"`.
 - Compare supports 2-5 newly entered candidate locations; saved analysis
   references as compare inputs are deferred.
 - No ML ranking, ML revenue forecast, city-wide search, H3/grid scan, new
   business types, scraping, Telegram/mobile/browser-agent wrapper, or official
   marketplace compliance guarantee.
-- CSV, Excel, and PDF exports are not implemented in V1.2.
+- CSV, Excel, PDF, and public export API endpoints are not implemented in V1.3.
 
 ## Security Notes
 

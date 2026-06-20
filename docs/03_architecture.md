@@ -157,7 +157,7 @@ LLM: OpenAI-compatible provider when enabled → template fallback
 | Manual validation | V1.1 | Validation cases and known limitations |
 | Compare mode | V1.2 | Implemented compare API/UI over deterministic per-address analyses |
 | Markdown compare export | V1.2 | Implemented from existing compare response snapshots |
-| Export/reporting | V1.3 | CSV/PDF/Excel polish from existing response snapshots if still needed |
+| Export/reporting | V1.3 | Markdown-only Streamlit downloads from response snapshots implemented; other formats/APIs deferred |
 | Saved location refresh | V1.4 | Re-run analysis and show deltas |
 | Scoring governance | V1.5 | Version comparison and auditable rule changes |
 | Marketplace maturity | V1.5 | Source-tracked manual-check rules |

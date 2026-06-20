@@ -63,10 +63,11 @@ for a PVZ / ПВЗ location in 1-3 minutes.
 
 | Capability | Version | Notes |
 |---|---|---|
-| Manual validation dataset and demo cases | V1.1 | First post-MVP step |
+| Manual validation dataset and demo cases | V1.1 | Owner completed 45 manual cases; all reported PASS |
 | Compare mode for 2-5 newly entered candidate locations | V1.2 | Implemented locally |
 | Markdown compare export | V1.2 | Implemented from compare response snapshots |
-| CSV/PDF/Excel export | V1.3 | Deferred reporting polish only |
+| Markdown analysis/detail downloads | V1.3 | Implemented from response snapshots |
+| CSV/PDF/Excel and public export API | Future | Deferred pending concrete workflow |
 | Saved location refresh and deltas | V1.4 | Manual refresh, no crawler |
 | Scoring rule comparison and governance | V1.5 | Preserve historical versions |
 | Marketplace rules with source tracking | V1.5 | Manual-check/versioned rules |

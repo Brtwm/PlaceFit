@@ -10,6 +10,25 @@ Fallback report is a first-class successful response. It is not an error state
 when LLM is disabled, no LLM key is configured, or the LLM provider is
 unavailable but the deterministic fallback report succeeds.
 
+## Report/export boundary
+
+AI/fallback reports and exports are separate layers.
+
+The report service can create explanatory text during `POST /api/v1/analyze`.
+When LLM is disabled or unavailable, fallback report text is a valid successful
+response.
+
+Export renderers do not generate or regenerate AI or fallback report text. They
+render deterministic Markdown from existing public response objects or saved
+public snapshots only. A single-analysis export may include report text already
+present in `AnalysisResponse`, but export must not call an LLM, rebuild fallback
+text, rerun providers, recompute score, confidence, finance, or decision, or
+change compare ranking.
+
+Compare export preserves the deterministic ranking already present in
+`CompareResponse`. It does not use LLM text for ranking or recommendations;
+`ranking_rules.uses_llm` remains `false`.
+
 ## JSON input contract
 
 LLM получает structured JSON (результат полного анализа):
@@ -82,10 +101,11 @@ LLM получает structured JSON (результат полного анал
 3. ❌ Не придумывай выручку.
 4. ❌ Не обещай прибыль или гарантию успеха.
 5. ❌ Не указывай данные, которых нет в JSON.
-6. ✅ Если данных недостаточно — явно скажи об этом.
-7. ✅ Используй только числа из JSON.
-8. ✅ Укажи confidence_score и объясни, почему он такой.
-9. ✅ Дай чек-лист ручной проверки.
+6. ❌ Не представляй marketplace checks как официальную проверку compliance.
+7. ✅ Если данных недостаточно — явно скажи об этом.
+8. ✅ Используй только числа из JSON.
+9. ✅ Укажи confidence_score и объясни, почему он такой.
+10. ✅ Дай чек-лист ручной проверки по официальным источникам.
 
 ## Prompt template (v1.0)
 

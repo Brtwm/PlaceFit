@@ -15,8 +15,10 @@
 
 ## Current Status
 
-**V1.2 compare mode is implemented locally and release-hardened with ordinary
-automated checks passing.**
+**V1.3 Markdown-only export and reporting polish is implemented locally and
+accepted. Renderer-level validation, ordinary automated checks, Docker smoke,
+Streamlit downloads, and external-file opening checks pass. V1.2 compare mode
+remains release-hardened.**
 
 Implemented scope:
 
@@ -32,21 +34,22 @@ Implemented scope:
 - Candidate-level compare failures with visible error details.
 - Saved compare sessions loaded from response snapshots.
 - Streamlit compare page and candidate-only compare map.
-- Markdown compare export from an existing compare response snapshot.
+- Markdown downloads for analysis, saved detail, and compare results from
+  existing response snapshots.
+- Service/UI-only export boundary with no public export API endpoint.
 - Docker Compose.
 - Fake/fallback demo path without external API keys or LLM key.
 - Optional real 2GIS/OSM providers and optional OpenAI-compatible LLM.
 
 Known limitations:
 
-- No validated 30-50 case manual benchmark dataset yet.
-- V1.1 stabilization is complete by owner acceptance; the broader 30-50 case
-  benchmark remains deferred and must not be presented as completed evidence.
+- The owner completed 45 manual validation cases and reported all checks as
+  `PASS`; detailed case sheets are not committed.
 - Demand inputs such as high density/new residential area are user-provided.
 - Marketplace requirements are `needs_manual_check`.
 - Real provider quality depends on external data freshness and coverage.
 - No profit guarantee or automatic revenue forecast.
-- CSV/PDF/Excel exports are deferred reporting/export polish.
+- CSV/PDF/Excel exports and public export API endpoints remain deferred.
 
 ## V1.1 — Stabilization, Validation, Documentation Hardening
 
@@ -69,9 +72,9 @@ analysis is useful and explainable.
 - Fresh-clone demo walkthrough.
 - Lightweight docs checklist before releases.
 
-**Current evidence status:** V1.1 is accepted as complete. A broader 30-50 case
-manual benchmark is deferred and is not claimed as completed validation
-evidence.
+**Current evidence status:** V1.1 is accepted as complete. The owner
+subsequently completed 45 manual validation cases and reported all checks as
+`PASS`. Detailed per-case sheets are not committed.
 
 **Non-goals:**
 
@@ -83,8 +86,8 @@ evidence.
 
 - Manual validation table or documents exist and distinguish completed cases
   from seed/pending cases.
-- 30-50 real validation cases are recorded or explicitly deferred by owner
-  decision without being presented as completed benchmark evidence.
+- 45 manual validation cases were completed by the owner and reported as
+  `PASS`; the aggregate result is recorded without inventing per-case details.
 - Known errors/limitations are recorded.
 - Demo path is reproducible from fresh clone.
 - Ordinary tests pass.
@@ -151,11 +154,23 @@ internal reviewer.
 **Why:** a decision-support tool needs portable evidence, not only an on-screen
 result.
 
-**Scope:**
+**Current status:** implemented locally for Markdown-only Streamlit downloads
+from existing analysis, saved-detail, and compare response snapshots. Export
+renderers do not rerun providers, analysis, scoring, finance, confidence,
+decision, report generation, LLM calls, or compare ranking.
 
-- Broader export/reporting polish beyond the V1.2 Markdown compare helper.
-- CSV/PDF/Excel exports if still needed.
-- Better report layout without changing decision logic.
+Final acceptance evidence is recorded in
+[`validation/v1.3_export_validation.md`](validation/v1.3_export_validation.md)
+with status `PASS`. Automated gates, renderer-level artifact inspection, Docker
+smoke, Streamlit downloads, and external-file opening checks pass.
+
+**Implemented scope:**
+
+- Single-analysis and saved-detail Markdown export.
+- Compare Markdown export.
+- Streamlit download controls for implemented Markdown formats only.
+- Service/UI-only exports; no public export endpoint or API-client method.
+- Deterministic snapshot rendering without changing decision logic.
 - Sections: summary, risks, finance, competitors, checklist, assumptions.
 - Clear labels for user hypotheses.
 - Clear disclaimer that PlaceFit does not guarantee profit.
@@ -165,19 +180,28 @@ result.
 - No new facts beyond analysis JSON.
 - No LLM authority over score, finance, confidence, or decision.
 - No automatic marketplace compliance claims.
+- No CSV, Excel, PDF, or public export API in V1.3.
+- No saved-analysis references as compare inputs.
 
 **Acceptance criteria:**
 
 - Export does not change deterministic pipeline output.
 - Report does not add facts absent from analysis JSON.
 - Fallback report remains available.
+- UI exposes only implemented Markdown downloads.
 
-**Recommended Codex phases:**
+**Completed Codex phases:**
 
 1. Define export data contract from existing analysis response.
-2. Decide whether CSV/PDF/Excel are still needed after the V1.2 Markdown helper.
-3. Add report/export regression tests.
-4. Validate exported files manually.
+2. Add deterministic single-analysis Markdown rendering.
+3. Add Streamlit Markdown downloads for analysis, saved detail, and compare.
+4. Keep the API/service boundary service-only.
+5. Add report/export regression tests.
+6. Synchronize public documentation and release notes.
+
+CSV, Excel, PDF, and public export endpoints remain deferred. Persisted final
+export-validation evidence now exists with `PASS`; the owner also completed 45
+manual validation cases with all checks reported as `PASS`.
 
 ## V1.4 — Monitoring Saved Locations
 

@@ -28,7 +28,7 @@ Use this concise roadmap wording:
 
 ```text
 MVP / V1.0: local demo ready
-V1.1: stabilization complete; broader manual benchmark deferred
+V1.1: stabilization complete; owner completed 45 manual validation cases, all PASS
 V1.2: compare mode
 V1.3: export/reporting polish
 V1.4: saved-location refresh and deltas

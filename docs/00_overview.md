@@ -6,10 +6,13 @@
 коммерческой локации под ПВЗ и сравнения 2-5 кандидатных локаций. MVP / V1.0
 сфокусирован на анализе конкретного адреса в Краснодаре.
 
-Текущий статус: **V1.2 compare mode implemented locally and release-hardened**.
+Текущий статус: **V1.3 Markdown-only export/reporting polish implemented and
+accepted locally**.
 Backend, PostgreSQL/PostGIS, deterministic services, fake/fallback providers,
 optional real providers, AI/fallback report, Streamlit UI, карта, чек-лист,
-история анализов, compare mode и Markdown compare export уже реализованы.
+история анализов, compare mode и snapshot-only Markdown downloads для нового
+анализа, сохранённой detail page и compare result уже реализованы. CSV, Excel,
+PDF и public export API endpoints отложены.
 
 ## Целевой пользователь
 
@@ -55,8 +58,9 @@ shell, external APIs или секретам.
 - **V1.1**: stabilization, manual validation, docs hardening.
 - **V1.2**: compare mode for 2-5 newly entered candidate locations and
   Markdown compare export.
-- **V1.3**: broader export/report polish, including CSV/PDF/Excel if still
-  needed.
+- **V1.3**: Markdown-only Streamlit downloads from existing analysis/detail and
+  compare snapshots are implemented; CSV/PDF/Excel and public export APIs are
+  deferred.
 - **V1.4**: manual refresh and delta view for saved locations.
 - **V1.5**: scoring governance and source-tracked marketplace rule maturity.
 - **V2**: city-wide location intelligence for PVZ only.

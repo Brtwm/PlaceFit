@@ -6,12 +6,14 @@
 commercial location for a PVZ / ПВЗ pickup point and comparing 2-5 candidate
 PVZ locations.
 
-Current status: **V1.2 compare mode implemented locally and release-hardened
-with ordinary automated checks passing**. The implemented demo path uses
-FastAPI, deterministic backend services, PostgreSQL/PostGIS, fake/fallback
-providers, optional real providers, optional LLM with fallback report, Streamlit
-UI, map, checklist, Docker Compose, saved analysis history, saved compare
-sessions, and Markdown compare export.
+Current status: **V1.3 Markdown-only export/reporting polish implemented and
+accepted locally after V1.2 compare mode was release-hardened**. The implemented demo
+path uses FastAPI, deterministic backend services, PostgreSQL/PostGIS,
+fake/fallback providers, optional real providers, optional LLM with fallback
+report, Streamlit UI, map, checklist, Docker Compose, saved analysis history,
+saved compare sessions, and snapshot-only Markdown downloads for analysis,
+saved detail, and compare results. CSV, Excel, PDF, and public export API
+endpoints are deferred.
 
 Core principle: **AI explains, deterministic code decides.**
 
@@ -148,8 +150,9 @@ They require explicit environment variables and must not run in ordinary tests.
 - LLM must not rank candidates.
 - Saved compare sessions are loaded from stored response snapshots and must not
   rerun providers, analysis, scoring, finance, report generation, or ranking.
-- Current V1.2 compare export is Markdown-only from an existing
-  `CompareResponse` snapshot.
+- V1.3 exports are Markdown-only Streamlit downloads from existing
+  `AnalysisResponse` / `CompareResponse` objects or saved public snapshots.
+- V1.3 exports are service/UI-only; no public export API endpoint is implemented.
 - PlaceFit does not guarantee profit.
 - `expected_gross_income_by_user` is a user hypothesis, not a forecast.
 - Marketplace checks require manual verification from official sources.
@@ -160,10 +163,11 @@ They require explicit environment variables and must not run in ordinary tests.
 
 Use `docs/10_roadmap.md` as the active future plan:
 
-1. V1.1 stabilization complete; deferred 30-50 case manual benchmark remains
-   future evidence work.
+1. V1.1 stabilization complete; the owner subsequently completed 45 manual
+   validation cases and reported all checks as passing.
 2. V1.2 compare mode implemented and release-hardened.
-3. V1.3 export/reporting polish.
+3. V1.3 Markdown-only export/reporting polish implemented and accepted locally; CSV, Excel,
+   PDF, and public export APIs deferred.
 4. V1.4 manual refresh and deltas for saved locations.
 5. V1.5 scoring governance and marketplace rule maturity.
 6. V2 city-wide PVZ-only intelligence.

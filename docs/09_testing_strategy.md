@@ -59,18 +59,33 @@ V1.2 compare persistence coverage:
   without rerunning analysis, providers, scoring, finance, report generation, or
   ranking.
 
-V1.2 compare Markdown export coverage:
+V1.3 export regression coverage:
 
-- Compare export tests cover implemented formats only. Current V1.2 export is
-  Markdown; CSV, PDF, and Excel are deferred unless added in a later reporting
-  phase.
-- Markdown export contains all successful and failed candidates, ranking rules,
-  warnings, assumptions, limitation notes, and the profit disclaimer.
-- Failed candidates export with `status = failed` and error fields.
-- Export order matches compare ranking for successful candidates, followed by
-  failed candidates in saved response order.
-- Export tests are pure unit tests over `CompareResponse` snapshots and make no
-  network, provider, DB, HTTP, analysis, or LLM calls.
+- `tests/unit/test_analysis_export.py` covers deterministic single-analysis
+  Markdown from `AnalysisResponse`, stable section and row ordering, Markdown
+  escaping, nullable values, user-hypothesis labeling, existing fallback report
+  preservation, disclaimers, and marketplace manual-verification wording.
+- `tests/unit/test_compare_export.py` covers deterministic compare Markdown from
+  `CompareResponse`, snapshot ordering without reranking, failed-candidate
+  visibility, ambiguous-address suggestions, escaping, nullable values,
+  assumptions, warnings, and `ranking_rules.uses_llm = false`.
+- `tests/unit/test_export_boundary.py` enforces the service-only boundary: no
+  public export endpoints/router, no UI API-client export methods, and no public
+  API contract claim for specific export endpoints.
+- `tests/unit/test_ui_export_controls.py` verifies schema-first snapshot
+  validation, stable Markdown download labels/filenames/MIME, visible caveats,
+  safe invalid-snapshot handling, and absence of CSV, Excel, or PDF controls.
+- Export tests are pure unit tests over response-shaped fixtures/snapshots. They
+  must not call providers, network, DB, HTTP, filesystem reads, geocoding, POI
+  search, analysis, scoring, finance, confidence, decision, report/fallback
+  generation, LLM, saved-session loading, or compare ranking.
+
+V1.3 final export acceptance evidence is recorded in
+[`validation/v1.3_export_validation.md`](validation/v1.3_export_validation.md).
+Renderer-level artifacts for good, weak/risky, two-candidate, five-candidate,
+and partial-failure scenarios passed fixture-to-Markdown inspection. The owner
+also completed Docker, Streamlit download, and external-file opening checks for
+the required scenarios. Final V1.3 acceptance is `PASS`.
 
 V1.2 UI API client coverage:
 
@@ -147,13 +162,11 @@ unless intentionally enabled.
 
 ## V1.1 Manual Validation Strategy
 
-V1.1 turned manual validation into a first-class artifact. The original target
-was 30-50 real Krasnodar addresses, but that full benchmark is deferred by owner
-decision for the V1.1 completion declaration.
-
-The present V1.1 release does not include a completed 30-50 case validation set.
-If broader validation resumes, record real cases, manual competitor checks,
-mismatch notes, and verdicts before claiming benchmark readiness.
+V1.1 turned manual validation into a first-class activity. The owner
+subsequently completed 45 manual validation cases and reported all checks as
+`PASS`. This satisfies the original 30-50 case target. Detailed case sheets are
+not committed, so the repository records this as owner-confirmed aggregate
+evidence rather than inventing per-case results.
 
 ### Address selection
 
@@ -210,8 +223,8 @@ equivalent table with these fields:
 
 ### Acceptance for V1.1 validation
 
-- The 30-50 case benchmark is either recorded or explicitly deferred by owner
-  decision.
+- The owner-confirmed benchmark contains 45 completed manual cases, all
+  reported as `PASS`.
 - At least five cases cover edge/ambiguous/boundary behavior.
 - Manual competitor checks, mismatch notes, and verdicts are recorded; seed or
   pending rows do not count as completed validation cases.

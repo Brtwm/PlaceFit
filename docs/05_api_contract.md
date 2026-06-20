@@ -398,15 +398,17 @@ included, it must be derived only from fields visible in the compare response.
 Stored compare snapshots preserve this historical ranking context and must not
 be rebuilt from current provider, scoring, finance, report, or ranking logic.
 
-### V1.2 Markdown export
+### Export API status — V1.3
 
-V1.2 compare summary export is generated as Markdown locally in the UI/export
-helper from an existing `CompareResponse` snapshot. It does not rerun geocoding,
-POI search, scoring, finance, report generation, or ranking.
+V1.3 exports are service/UI-only local Streamlit downloads. No public
+`POST /api/v1/exports/...` endpoint is implemented in V1.3. Markdown exports
+are generated from existing `AnalysisResponse` / `CompareResponse` objects or
+saved public snapshots and do not rerun geocoding, POI search, analysis,
+scoring, finance, confidence, decision, report generation, LLM calls, or
+compare ranking.
 
-No broad `POST /api/v1/exports` endpoint is implemented in V1.2. CSV, PDF, and
-Excel export are not implemented in V1.2; broader reporting/export polish
-remains future V1.3 work.
+CSV, Excel, and PDF export endpoints remain deferred until there is a concrete
+non-Streamlit API-client workflow.
 
 ### Error policy
 
@@ -565,7 +567,7 @@ a future reporting iteration if there is a product need.
 
 | Endpoint | Версия | Назначение |
 |----------|--------|-----------|
-| POST /api/v1/exports | V1.3 | Broader reporting/export polish beyond the V1.2 local compare Markdown helper |
+| POST /api/v1/exports | Future/deferred | No public export API in V1.3; current Markdown exports are service/UI-only |
 | POST /api/v1/locations/{id}/reanalyze | V1.4 | Manual refresh saved location |
 | GET /api/v1/locations/{id}/deltas | V1.4 | Delta between saved analyses |
 | GET /api/v1/scoring-versions/compare | V1.5 | Scoring rule version comparison |
