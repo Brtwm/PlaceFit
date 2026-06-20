@@ -5,6 +5,7 @@ from __future__ import annotations
 import streamlit as st
 
 from ui.api_client import ApiClient, ApiError
+from ui.components.export_controls import render_analysis_download_controls
 from ui.components.layout import render_page_header, setup_page
 from ui.components.result import render_analysis_result
 
@@ -45,6 +46,7 @@ def main() -> None:
         return
 
     render_analysis_result(response)
+    render_analysis_download_controls(response)
 
 
 def _resolve_location_id() -> int | None:
