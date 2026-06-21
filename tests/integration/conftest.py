@@ -92,6 +92,7 @@ def _reset_public_schema(db_url: str) -> None:
                     """
                     DROP TABLE IF EXISTS
                         alembic_version,
+                        analysis_snapshots,
                         compare_sessions,
                         marketplace_requirements,
                         reports,
@@ -122,6 +123,7 @@ def _run_alembic_upgrade(db_url: str) -> None:
 
 def _clear_analysis_tables(engine: Engine) -> None:
     with engine.begin() as connection:
+        connection.execute(text("DELETE FROM analysis_snapshots"))
         connection.execute(text("DELETE FROM compare_sessions"))
         connection.execute(text("DELETE FROM reports"))
         connection.execute(text("DELETE FROM financial_models"))

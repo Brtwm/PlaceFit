@@ -1,12 +1,22 @@
 import socket
 from typing import Any
 
+import pytest
 from app.api.v1.deps import get_geocoding_service
-from app.models import FinancialModel, Location, Report, Score, ScoringVersion
+from app.models import (
+    AnalysisSnapshot,
+    FinancialModel,
+    Location,
+    LocationPoiDistance,
+    Report,
+    Score,
+    ScoringVersion,
+)
 from app.providers.geocoder.fake import FakeGeocoder
+from app.schemas.analysis import AnalysisRequest, AnalysisResponse
 from app.services.geocoding import GeocodingService
 from fastapi.testclient import TestClient
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 
@@ -101,8 +111,37 @@ def test_analyze_saves_to_db(client: TestClient, db_session: Session) -> None:
     assert score.scoring_version_id == scoring_version.id
 
 
+def test_analyze_saves_validated_native_root_snapshot(
+    client: TestClient,
+    db_session: Session,
+) -> None:
+    request_payload = valid_request()
+    response = client.post("/api/v1/analyze", json=request_payload)
+
+    assert response.status_code == 200
+    response_payload = response.json()
+    location_id = response_payload["location"]["id"]
+    snapshots = db_session.scalars(select(AnalysisSnapshot)).all()
+
+    assert len(snapshots) == 1
+    snapshot = snapshots[0]
+    assert snapshot.location_id == location_id
+    assert snapshot.root_location_id == location_id
+    assert snapshot.previous_location_id is None
+    assert snapshot.origin == "native"
+    assert snapshot.snapshot_schema_version == "v1"
+    assert AnalysisRequest.model_validate(snapshot.request_snapshot).model_dump(
+        mode="json",
+    ) == request_payload
+    assert AnalysisResponse.model_validate(snapshot.response_snapshot).model_dump(
+        mode="json",
+    ) == response_payload
+    assert snapshot.response_snapshot == response_payload
+
+
 def test_analyze_ambiguous_address_returns_400_with_suggestions(
     client: TestClient,
+    db_session: Session,
 ) -> None:
     _override_geocoder(
         client,
@@ -144,9 +183,13 @@ def test_analyze_ambiguous_address_returns_400_with_suggestions(
     payload = response.json()
     assert payload["error"]["code"] == "ADDRESS_AMBIGUOUS"
     assert payload["error"]["suggestions"]
+    assert db_session.scalar(select(func.count()).select_from(AnalysisSnapshot)) == 0
 
 
-def test_analyze_city_not_supported_returns_400(client: TestClient) -> None:
+def test_analyze_city_not_supported_returns_400(
+    client: TestClient,
+    db_session: Session,
+) -> None:
     _override_geocoder(
         client,
         {
@@ -173,9 +216,13 @@ def test_analyze_city_not_supported_returns_400(client: TestClient) -> None:
 
     assert response.status_code == 400
     assert response.json()["error"]["code"] == "CITY_NOT_SUPPORTED"
+    assert db_session.scalar(select(func.count()).select_from(AnalysisSnapshot)) == 0
 
 
-def test_analyze_geocoding_failed_returns_502(client: TestClient) -> None:
+def test_analyze_geocoding_failed_returns_502(
+    client: TestClient,
+    db_session: Session,
+) -> None:
     client.app.dependency_overrides[get_geocoding_service] = lambda: GeocodingService(
         FakeGeocoder([]),
     )
@@ -184,12 +231,45 @@ def test_analyze_geocoding_failed_returns_502(client: TestClient) -> None:
 
     assert response.status_code == 502
     assert response.json()["error"]["code"] == "GEOCODING_FAILED"
+    assert db_session.scalar(select(func.count()).select_from(AnalysisSnapshot)) == 0
 
 
-def test_analyze_validation_error_returns_422(client: TestClient) -> None:
+def test_analyze_validation_error_returns_422(
+    client: TestClient,
+    db_session: Session,
+) -> None:
     response = client.post("/api/v1/analyze", json={"address": "Краснодар"})
 
     assert response.status_code == 422
+    assert db_session.scalar(select(func.count()).select_from(AnalysisSnapshot)) == 0
+
+
+def test_snapshot_failure_rolls_back_all_analysis_rows(
+    client: TestClient,
+    db_session: Session,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    def fail_snapshot(*args: object, **kwargs: object) -> None:
+        raise RuntimeError("forced snapshot failure")
+
+    monkeypatch.setattr(
+        "app.services.analysis_snapshots.AnalysisSnapshotService."
+        "create_native_root_snapshot",
+        fail_snapshot,
+    )
+
+    with pytest.raises(RuntimeError, match="forced snapshot failure"):
+        client.post("/api/v1/analyze", json=valid_request())
+
+    for model in (
+        Location,
+        Score,
+        FinancialModel,
+        Report,
+        LocationPoiDistance,
+        AnalysisSnapshot,
+    ):
+        assert db_session.scalar(select(func.count()).select_from(model)) == 0
 
 
 def test_analyze_does_not_call_network(

@@ -34,6 +34,10 @@ from app.schemas.location import (
 from app.schemas.report import DataSourceInfo, MarketplaceRequirements, ReportResult
 from app.schemas.score import ScoreDetails as ScoreDetailsSchema
 from app.schemas.score import ScoreResult as ScoreResultSchema
+from app.services.analysis_snapshots import (
+    AnalysisSnapshotError,
+    AnalysisSnapshotService,
+)
 from app.services.competitors import CompetitorItem, CompetitorsResult
 from app.services.competitors import search_competitors as run_competitor_search
 from app.services.confidence import (
@@ -102,6 +106,7 @@ class AnalysisService:
         self._geocoding_service = geocoding_service
         self._poi_providers = poi_providers
         self._report_service = report_service
+        self._snapshot_service = AnalysisSnapshotService(db)
 
     def analyze(self, request: AnalysisRequest) -> AnalysisResponse:
         """Run the full mocked-provider analysis pipeline and persist it."""
@@ -220,6 +225,11 @@ class AnalysisService:
                 scoring_version=scoring_version.version,
                 checklist=checklist,
             )
+            self._snapshot_service.create_native_root_snapshot(
+                location_id=persisted.location.id,
+                request=request,
+                response=response,
+            )
             self._db.commit()
         except Exception:
             self._db.rollback()
@@ -262,6 +272,21 @@ class AnalysisService:
 
     def get_location_detail(self, location_id: int) -> AnalysisResponse:
         """Return full persisted analysis details for a location."""
+
+        try:
+            snapshot_response = self._snapshot_service.load_response(location_id)
+        except AnalysisSnapshotError as exc:
+            raise AnalysisServiceError(
+                "INTERNAL_ERROR",
+                "Сохранённый снимок анализа повреждён",
+            ) from exc
+        if snapshot_response is not None:
+            return snapshot_response
+
+        return self._get_location_detail_legacy(location_id)
+
+    def _get_location_detail_legacy(self, location_id: int) -> AnalysisResponse:
+        """Reconstruct a pre-snapshot analysis from normalized rows."""
 
         parts = self._load_persisted_analysis(location_id)
         scoring_version = self._db.get(

@@ -1,5 +1,9 @@
+from app.models import AnalysisSnapshot, Location, Report, Score
 from app.schemas import AnalysisResponse
+from app.services.analysis_export import render_analysis_markdown
 from fastapi.testclient import TestClient
+from sqlalchemy import delete, select
+from sqlalchemy.orm import Session
 
 
 def valid_request(
@@ -60,6 +64,88 @@ def test_locations_detail_returns_full_analysis(client: TestClient) -> None:
     detail = AnalysisResponse.model_validate(response.json())
     assert detail.location.id == location_id
     assert detail.report.provider == "fallback"
+
+
+def test_locations_detail_reads_snapshot_before_normalized_rows(
+    client: TestClient,
+    db_session: Session,
+) -> None:
+    analyze_response = client.post("/api/v1/analyze", json=valid_request())
+    assert analyze_response.status_code == 200
+    original = analyze_response.json()
+    location_id = original["location"]["id"]
+
+    location = db_session.get(Location, location_id)
+    score = db_session.scalar(select(Score).where(Score.location_id == location_id))
+    report = db_session.scalar(select(Report).where(Report.location_id == location_id))
+    assert location is not None
+    assert score is not None
+    assert report is not None
+    location.normalized_address = "Изменённый нормализованный адрес"
+    score.total_score = 1
+    report.report_text = "Изменённый отчёт"
+    db_session.commit()
+
+    response = client.get(f"/api/v1/locations/{location_id}")
+
+    assert response.status_code == 200
+    assert response.json() == original
+
+
+def test_locations_detail_falls_back_for_legacy_analysis(
+    client: TestClient,
+    db_session: Session,
+) -> None:
+    analyze_response = client.post("/api/v1/analyze", json=valid_request())
+    assert analyze_response.status_code == 200
+    location_id = analyze_response.json()["location"]["id"]
+    db_session.execute(
+        delete(AnalysisSnapshot).where(AnalysisSnapshot.location_id == location_id),
+    )
+    db_session.commit()
+
+    response = client.get(f"/api/v1/locations/{location_id}")
+
+    assert response.status_code == 200
+    detail = AnalysisResponse.model_validate(response.json())
+    assert detail.location.id == location_id
+
+
+def test_snapshot_backed_detail_remains_export_compatible(
+    client: TestClient,
+) -> None:
+    analyze_response = client.post("/api/v1/analyze", json=valid_request())
+    assert analyze_response.status_code == 200
+    location_id = analyze_response.json()["location"]["id"]
+
+    detail_response = client.get(f"/api/v1/locations/{location_id}")
+    detail = AnalysisResponse.model_validate(detail_response.json())
+    markdown = render_analysis_markdown(detail)
+
+    assert detail_response.status_code == 200
+    assert detail.location.address in markdown
+
+
+def test_locations_detail_returns_controlled_error_for_corrupt_snapshot(
+    client: TestClient,
+    db_session: Session,
+) -> None:
+    analyze_response = client.post("/api/v1/analyze", json=valid_request())
+    assert analyze_response.status_code == 200
+    location_id = analyze_response.json()["location"]["id"]
+    snapshot = db_session.get(AnalysisSnapshot, location_id)
+    assert snapshot is not None
+    snapshot.response_snapshot = {"unexpected": "private payload"}
+    db_session.commit()
+
+    response = client.get(f"/api/v1/locations/{location_id}")
+
+    assert response.status_code == 500
+    assert response.json()["error"] == {
+        "code": "INTERNAL_ERROR",
+        "message": "Сохранённый снимок анализа повреждён",
+    }
+    assert "private payload" not in response.text
 
 
 def test_locations_detail_not_found(client: TestClient) -> None:
