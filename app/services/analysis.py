@@ -677,6 +677,7 @@ def _to_competitors_summary(result: CompetitorsResult) -> CompetitorsSummary:
         average_competitor_distance_m=result.average_competitor_distance_m,
         list=[
             CompetitorInfo(
+                external_id=competitor.external_id or None,
                 name=competitor.name,
                 brand=competitor.brand,
                 category=competitor.category,

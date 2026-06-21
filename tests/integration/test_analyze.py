@@ -66,6 +66,7 @@ def test_analyze_success_returns_full_response(client: TestClient) -> None:
     assert payload["report"]["status"] == "fallback"
     assert payload["report"]["provider"] == "fallback"
     first_competitor = payload["competitors"]["list"][0]
+    assert first_competitor["external_id"]
     assert first_competitor["lat"] is not None
     assert first_competitor["lon"] is not None
 

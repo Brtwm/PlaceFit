@@ -6,6 +6,7 @@ import pytest
 from app.schemas import (
     AnalysisRequest,
     AnalysisResponse,
+    CompetitorInfo,
     ErrorResponse,
     MarketplaceRequirementResult,
     MarketplaceRequirements,
@@ -84,6 +85,16 @@ def test_full_valid_analysis_response_fixture_validates() -> None:
 
     assert response.score.total_score == 82
     assert response.report.provider == "openai_compatible"
+
+
+def test_competitor_external_id_is_optional_and_backward_compatible() -> None:
+    payload = load_fixture("analyze_response_valid.json")["competitors"]["list"][0]
+
+    legacy = CompetitorInfo.model_validate(payload)
+    current = CompetitorInfo.model_validate({**payload, "external_id": "poi-123"})
+
+    assert legacy.external_id is None
+    assert current.external_id == "poi-123"
 
 
 def test_valid_error_response_fixture_validates() -> None:

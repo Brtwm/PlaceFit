@@ -27,6 +27,7 @@ class CompetitorInfo(AppBaseModel):
     rating: PositiveFloat | None = None
     reviews_count: PositiveInt | None = None
     source: str
+    external_id: str | None = None
 
 
 class CompetitorsSummary(AppBaseModel):
